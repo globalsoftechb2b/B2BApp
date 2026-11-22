@@ -437,7 +437,7 @@ function App() {
           {view==="products" && <ProductsView products={filteredProducts} search={productSearch} setSearch={setProductSearch} onAdd={()=>{setEditingProduct(null);setNewProductName("");setNewProductPrice("");setNewProductStock("0");setShowProductForm(true)}} onEdit={openProductEdit} onDelete={deleteProduct}/>} 
           {view==="customers" && <CustomersView client={activeClient} customers={clientCustomers} orders={clientOrders} setCustomers={setCustomers} ownerSession={ownerSession}/>}
           {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders} setProducts={setProducts}/>}
-          {view==="store" && <CustomerStorefront client={activeClient} products={clientProducts} customers={clientCustomers} setCustomers={setCustomers} setClients={setClients} setOrders={setOrders}/>} 
+          {view==="store" && <CustomerStorefront client={activeClient} products={clientProducts} customers={clientCustomers} setCustomers={setCustomers} setClients={setClients} setOrders={setOrders} setProducts={setProducts}/>} 
           {view==="builder" && <>
           <section className="clientbar">
             <label className="client-select">Client
@@ -573,7 +573,7 @@ function ClientsView({clients,search,setSearch,onAdd,onToggle,onOpen}:{clients:C
 function ShopDashboard({client,products,setView,onAddProduct,orders,onOpenOwner}:{client:Client;products:Product[];setView:(v:AppView)=>void;onAddProduct:()=>void;orders:Order[];onOpenOwner:()=>void}){return <section className="page-view"><div className="page-title"><div><span className="eyebrow">SHOP DASHBOARD</span><h1>{client.name}</h1><p>Manage this shop's catalog and customer-facing B2B app.</p></div><div className="title-actions"><button className="ghost-dark" onClick={onOpenOwner}>📱 Open Shop Owner App</button><button className="ghost-dark" onClick={()=>setView("builder")}>✣ App Builder</button><button className="primary" onClick={onAddProduct}>＋ Add Product</button></div></div><div className="shop-identity"><div className="shop-logo">{client.name.slice(0,1)}</div><div><b>Shop Owner Workspace</b><span>Customer limit: {client.limit.toLocaleString("en-IN")} • {client.status}</span></div><button className="copy-btn" onClick={()=>navigator.clipboard?.writeText(window.location.origin+"/?shop="+client.slug)}>⧉ Copy App Link</button></div><div className="stats-grid"><Stat label="Products" value={products.length} note="Catalog items"/><Stat label="Customers" value={client.customers} note={`${client.limit-client.customers} slots available`}/><Stat label="Orders" value={orders.length} note="B2B orders"/><Stat label="App Status" value={client.status} note="Customer app"/></div><div className="dashboard-grid"><div className="card"><div className="card-head"><div><h3>Catalog</h3><p>Products currently available to the shop.</p></div><button className="text-button" onClick={()=>setView("products")}>Manage Products →</button></div><div className="mini-products">{products.slice(0,4).map(p=><div className="mini-product" key={p.id}><div className="product-thumb">◇</div><div><b>{p.name}</b><span>{p.sku} • {p.category}</span></div><strong>{p.price}</strong></div>)}</div></div><div className="card customer-card"><div className="card-head"><div><h3>Customer App</h3><p>What your customers will open.</p></div></div><div className="customer-link">✓ Customer app is ready</div><div className="app-features"><span>✓ Branded shop</span><span>✓ Product catalog</span><span>✓ WhatsApp sharing</span><span>✓ Mobile-first</span></div><div className="store-actions"><button className="outline-full" onClick={()=>setView("builder")}>Customize Customer App</button><button className="primary-full" onClick={()=>setView("store")}>Open Customer App</button></div></div></div></section>}
 function ProductsView({products,search,setSearch,onAdd,onEdit,onDelete}:{products:Product[];search:string;setSearch:(v:string)=>void;onAdd:()=>void;onEdit:(p:Product)=>void;onDelete:(id:string)=>void}){return <section className="page-view"><div className="page-title"><div><span className="eyebrow">PRODUCT MANAGEMENT</span><h1>Products</h1><p>Add and maintain the shop catalog used by the customer app.</p></div><button className="primary" onClick={onAdd}>＋ Add Product</button></div><div className="toolbar"><div className="search-wide">⌕<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search product or SKU..."/></div><span>{products.length} products</span></div><div className="card table-card"><table><thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>PRICE</th><th>STOCK</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>{products.map(p=><tr key={p.id}><td><div className="table-client"><div className="product-thumb small">◇</div><span><b>{p.name}</b><small>{p.sku}</small></span></div></td><td>{p.category}</td><td><b>{p.price}</b></td><td><span className={p.stock===0?"stock zero":"stock"}>{p.stock}</span></td><td><span className={p.status==="Active"?"tag":"tag muted"}>{p.status}</span></td><td><div className="row-actions"><button className="small-action" onClick={()=>onEdit(p)}>Edit</button><button className="small-action danger-text" onClick={()=>onDelete(p.id)}>Delete</button></div></td></tr>)}</tbody></table></div></section>}
 function CustomersView({client,customers,orders,setCustomers,ownerSession}:{client:Client;customers:Customer[];orders:Order[];setCustomers:Dispatch<SetStateAction<Customer[]>>;ownerSession:string|null}){const available=Math.max(0,client.limit-client.customers);return <section className="page-view"><div className="page-title"><div><span className="eyebrow">CUSTOMER MANAGEMENT</span><h1>{client.name} Customers</h1><p>Customer access is bounded by the Super Admin limit.</p></div><div className="limit-badge">Limit {client.limit.toLocaleString("en-IN")}</div></div><div className="stats-grid"><Stat label="Registered" value={client.customers} note="Active customer accounts"/><Stat label="Available Slots" value={available} note="Remaining capacity"/><Stat label="Usage" value={`${Math.round((client.customers/client.limit)*100)}%`} note="Customer limit usage"/><Stat label="Access" value={client.status} note="Shop status"/></div><div className="card table-card"><div className="customer-toolbar"><b>Customer Accounts</b><span>{customers.length} loaded</span></div><table><thead><tr><th>CUSTOMER</th><th>PHONE</th><th>ORDERS</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>{customers.map(c=><tr key={c.id}><td><div className="table-client"><div className="client-mark">{c.name.slice(0,1)}</div><span><b>{c.name}</b><small>{c.id}</small></span></div></td><td>{c.phone}</td><td>{c.orders}</td><td><span className={c.status==="Active"?"tag":"tag muted"}>{c.status}</span></td><td><div className="row-actions"><button className="small-action" onClick={()=>setViewingCustomer(c)}>View</button><button className="small-action" onClick={async()=>{const nextStatus=c.status==="Active"?"Blocked":"Active";if(ownerSession){try{const response=await fetch(`/api/owner/customers/${c.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status:nextStatus})});if(!response.ok)return;const updated=await response.json();setCustomers(x=>x.map(v=>v.id===updated.id?updated:v));}catch{return;}}else setCustomers(x=>x.map(v=>v.id===c.id?{...v,status:nextStatus}:v))}}>{c.status==="Active"?"Block":"Unblock"}</button></div></td></tr>)}</tbody></table>{viewingCustomer&&<Modal title="Customer Details" onClose={()=>setViewingCustomer(null)}><div className="detail-grid"><div><span>Name</span><b>{viewingCustomer.name}</b></div><div><span>Mobile</span><b>{viewingCustomer.phone}</b></div><div><span>Email</span><b>{viewingCustomer.email||"—"}</b></div><div><span>Address</span><b>{viewingCustomer.address||"—"}</b></div><div><span>Orders</span><b>{viewingCustomer.orders}</b></div><div><span>Status</span><b>{viewingCustomer.status}</b></div></div><div className="history-section"><h3>Order History</h3>{orders.filter(o=>o.customerId===viewingCustomer.id).map(o=><div className="history-row" key={o.id}><b>{o.id}</b><span>{o.createdAt}</span><span>{o.status}</span><strong>₹{o.amount.toLocaleString("en-IN")}</strong></div>)}{orders.filter(o=>o.customerId===viewingCustomer.id).length===0&&<div className="empty">No orders found.</div>}</div></Modal>}</div></section>}
-function CustomerStorefront({client,products,customers,setCustomers,setClients,setOrders}:{client:Client;products:Product[];customers:Customer[];setCustomers:Dispatch<SetStateAction<Customer[]>>;setClients:React.Dispatch<React.SetStateAction<Client[]>>;setOrders:Dispatch<SetStateAction<Order[]>>}){
+function CustomerStorefront({client,products,customers,setCustomers,setClients,setOrders,setProducts}:{client:Client;products:Product[];customers:Customer[];setCustomers:Dispatch<SetStateAction<Customer[]>>;setClients:React.Dispatch<React.SetStateAction<Client[]>>;setOrders:Dispatch<SetStateAction<Order[]>>;setProducts:Dispatch<SetStateAction<Product[]>>}){
   const [category,setCategory]=useState("All");
   const [search,setSearch]=useState("");
   const [cart,setCart]=useState<Record<string,number>>({});
@@ -599,44 +599,53 @@ function CustomerStorefront({client,products,customers,setCustomers,setClients,s
     setCartOpen(false); setAuthMode("login");
   }
 
-  function login(){
+  async function login(){
     const phone=authPhone.trim();
     if(phone.length<8){setAuthError("Enter a valid mobile number.");return;}
-    const found=customers.find(c=>c.phone.replace(/\\D/g,"")===phone.replace(/\\D/g,"")&&c.status==="Active");
-    if(!found){setAuthError("Customer not found. Please register first.");return;}
-    setCustomer(found); setAuthMode(null); setAuthError(""); setAuthAddress(found.address||""); setCheckoutOpen(true);
+    setAuthError("");
+    try{
+      const response=await fetch("/api/customer/login",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({shop:client.slug,phone})});
+      const data=await response.json();
+      if(!response.ok){setAuthError(data.error||"Login failed.");return;}
+      setCustomer(data.customer);
+      setCustomers(x=>{const exists=x.some(v=>v.id===data.customer.id);return exists?x.map(v=>v.id===data.customer.id?data.customer:v):[data.customer,...x];});
+      setAuthMode(null);setAuthError("");setAuthAddress(data.customer.address||"");setCheckoutOpen(true);
+    }catch{setAuthError("Unable to connect to the customer service.");}
   }
 
-  function register(){
+  async function register(){
     const name=authName.trim(), phone=authPhone.trim(), email=authEmail.trim(), address=authAddress.trim();
     if(name.length<2){setAuthError("Enter your business/customer name.");return;}
     if(phone.replace(/\\D/g,"").length<8){setAuthError("Enter a valid mobile number.");return;}
     if(!address){setAuthError("Delivery address is required.");return;}
-    if(customers.some(c=>c.phone.replace(/\\D/g,"")===phone.replace(/\\D/g,""))){setAuthError("This mobile number is already registered. Please login.");return;}
-    const registeredCount=client.customers;
-    if(registeredCount>=client.limit){setAuthError("Customer registration limit has been reached for this shop.");return;}
-    const next:Customer={id:`C-${Date.now()}`,name,phone,email:email||undefined,address,orders:0,status:"Active",clientId:client.id};
-    setCustomers(x=>[...x,next]); setClients(x=>x.map(c=>c.id===client.id?{...c,customers:c.customers+1}:c)); setCustomer(next); setAuthMode(null); setAuthError(""); setCheckoutOpen(true);
+    setAuthError("");
+    try{
+      const response=await fetch("/api/customer/register",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({shop:client.slug,name,phone,email,address})});
+      const data=await response.json();
+      if(!response.ok){setAuthError(data.error||"Registration failed.");return;}
+      setCustomers(x=>[data.customer,...x.filter(v=>v.id!==data.customer.id)]);
+      setClients(x=>x.map(c=>c.id===client.id?{...c,customers:Math.max(c.customers+1,data.customer.clientId===c.id?c.customers+1:c.customers)}:c));
+      setCustomer(data.customer);setAuthMode(null);setAuthError("");setCheckoutOpen(true);
+    }catch{setAuthError("Unable to connect to the customer service.");}
   }
 
-  function placeOrder(){
+  async function placeOrder(){
     if(!customer){setAuthMode("login");return;}
     const address=authAddress.trim()||customer.address?.trim()||"";
     if(!address){setAuthMode("register");setAuthError("Delivery address is required.");return;}
-    const items=Object.entries(cart).filter(([,q])=>q>0).reduce((sum,[id,q])=>sum+q,0);
-    if(items===0)return;
-    const orderId=`ORD-${Date.now()}`;
-    const createdAt=new Date().toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
     const lines:OrderLine[]=Object.entries(cart).filter(([,q])=>q>0).map(([id,qty])=>{const p=products.find(x=>x.id===id);if(!p)return null;const unitPrice=priceOf(p.price);return {productId:p.id,name:p.name,sku:p.sku,qty,unitPrice,lineTotal:unitPrice*qty};}).filter((x):x is OrderLine=>Boolean(x));
     if(lines.length===0)return;
-    const insufficient=lines.find(line=>{const p=products.find(x=>x.id===line.productId);return !p||p.stock<line.qty;});
-    if(insufficient){setAuthError(`Insufficient stock for ${insufficient.name}.`);setCheckoutOpen(true);return;}
-    const order:Order={id:orderId,customer:customer.name,phone:customer.phone,email:customer.email,address,customerId:customer.id,clientId:client.id,items,lines,amount:lines.reduce((sum,line)=>sum+line.lineTotal,0),status:"Pending",createdAt};
-    setProducts(prev=>prev.map(p=>{const line=lines.find(x=>x.productId===p.id);return line?{...p,stock:p.stock-line.qty}:p;}));
-    setOrders(x=>[order,...x]);
-    setCustomers(x=>x.map(c=>c.id===customer.id?{...c,orders:c.orders+1,address}:c));
-    setCustomer(x=>x?{...x,address}:x);
-    setCart({});setCartOpen(false);setCheckoutOpen(false);setOrdered(orderId);
+    setAuthError("");
+    try{
+      const response=await fetch("/api/customer/orders",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({address,lines:lines.map(x=>({productId:x.productId,qty:x.qty}))})});
+      const data=await response.json();
+      if(!response.ok){setAuthError(data.error||"Unable to place order.");setCheckoutOpen(true);return;}
+      setProducts(prev=>prev.map(p=>{const updated=data.products?.find((x:Product)=>x.id===p.id);return updated?updated:p;}));
+      setOrders(x=>[data.order,...x]);
+      setCustomers(x=>x.map(v=>v.id===data.customer.id?data.customer:v));
+      setCustomer(data.customer);
+      setCart({});setCartOpen(false);setCheckoutOpen(false);setOrdered(data.order.id);
+    }catch{setAuthError("Unable to connect to the order service.");setCheckoutOpen(true);}
   }
 
   return <section className="storefront">
