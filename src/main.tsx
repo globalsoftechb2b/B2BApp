@@ -323,6 +323,19 @@ function App() {
   function createProduct() { saveProduct(); }
   function toggleClientStatus(id:string) { setClients(x=>x.map(c=>c.id===id?{...c,status:c.status==="Active"?"Inactive":"Active"}:c)); }
 
+  function openOwnerWorkspace(viewName: AppView) {
+    if (!ownerSession) return;
+    const owner = clients.find((item) => item.id === ownerSession);
+    if (!owner || owner.status !== "Active") {
+      setShopOwnerMode(false);
+      setOwnerSession(null);
+      setView("shop");
+      return;
+    }
+    setClient(owner.name);
+    setView(viewName);
+  }
+
   function openShopOwner() {
     setShopOwnerMode(true);
     setOwnerSession(null);
@@ -372,7 +385,7 @@ function App() {
       <div className={shopOwnerMode ? "workspace owner-workspace" : "workspace"}>
         {!shopOwnerMode ? <aside className="sidebar">
           <div className="side-section">
-            {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"],["templates","Templates","◫"],["customization","Customization","✦"],["settings","Settings","⚙"],["billing","Billing","▤"],["users","Users","♙"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>setView(key as AppView)}><span>{ico}</span>{label}</button>)}
+            {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"],["templates","Templates","◫"],["customization","Customization","✦"],["settings","Settings","⚙"],["billing","Billing","▤"],["users","Users","♙"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>openOwnerWorkspace(key as AppView)}><span>{ico}</span>{label}</button>)}
           </div>
           <div className="saas-card">
             <div className="crown">♛</div><b>SaaS Model</b>
@@ -484,7 +497,7 @@ function App() {
           {([["shop","Home","⌂"],["orders","Orders","▤"],["products","Products","◇"],["customers","Customers","♧"]] as const).map(([key,label,ico]) =>
             <button key={key} className={view===key?"active":""} onClick={()=>setView(key as AppView)}><span>{ico}</span><small>{label}</small></button>
           )}
-          <button className={view==="store"?"active":""} onClick={()=>setView("store")}><span>◉</span><small>Customer App</small></button>
+          <button className={view==="store"?"active":""} onClick={()=>openOwnerWorkspace("store")}><span>◉</span><small>Customer App</small></button>
         </nav>}
       </div>
 
