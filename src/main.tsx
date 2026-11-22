@@ -65,6 +65,25 @@ function saveState<T>(key:string,value:T){
   try{localStorage.setItem(key,JSON.stringify(value))}catch{}
 }
 
+function RangeField({ label, value, min, max, onChange }: { label:string; value:string; min:number; max:number; onChange:(value:string)=>void }) {
+  return <label className="field">{label}<input type="range" min={min} max={max} value={Number(value)} onChange={(e)=>onChange(e.target.value)} /><small>{value}px</small></label>;
+}
+
+function BuilderPreviewComponent({ item }: { item: BuilderComponent }) {
+  const radius = Number(item.data.radius || 16);
+  const spacing = Number(item.data.spacing || 16);
+  const style = { borderRadius: radius, marginBottom: spacing };
+  if (item.type === "banner") return <div className="banner" style={style}><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>;
+  if (item.type === "category") return <div className="categories" style={style}>{item.data.items.split("|").filter(Boolean).map(x=><div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>;
+  if (item.type === "product") return <div className="product-grid" style={style}>{item.data.items.split("|").filter(Boolean).map((x,i)=><div className="product-card" key={x}><div className="product-image">◇</div><b>{x}</b><span>{(item.data.prices||"").split("|")[i] || "₹0"}</span><button>Add</button></div>)}</div>;
+  if (item.type === "text") return <h2 className="mobile-heading" style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
+  if (item.type === "image") return <div className="image-block" style={style}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
+  if (item.type === "button") return <button className="mobile-cta" style={style}>{item.data.label}</button>;
+  if (item.type === "search") return <div className="feature-card" style={style}><div className="feature-icon">⌾</div><div><b>{item.data.title}</b><span>Find products by photo</span></div><span>›</span></div>;
+  if (item.type === "whatsapp") return <button className="whatsapp-button" style={style}>◉ {item.data.label}</button>;
+  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
+}
+
 function App() {
   const [client, setClient] = useState("ABC Traders");
   const [view, setView] = useState<AppView>("builder");
@@ -142,21 +161,25 @@ function App() {
       title: meta.label,
       data: { ...defaults[type] },
     };
-    setComponents((items) => [...items, next]);
+    setComponents((items) => {
+      const updated = [...items, next];
+      if (activeClient) setBuilderByClient((current) => ({ ...current, [activeClient.id]: updated }));
+      return updated;
+    });
     setSelectedId(id);
   }
 
   function updateSelected(field: string, value: string) {
-    if (!selected) return;
-    setComponents((items) =>
-      items.map((item) =>
-        item.id === selected.id
-          ? field === "title"
-            ? { ...item, title: value }
-            : { ...item, data: { ...item.data, [field]: value } }
-          : item
-      )
+    if (!selected || !activeClient) return;
+    const next = components.map((item) =>
+      item.id === selected.id
+        ? field === "title"
+          ? { ...item, title: value }
+          : { ...item, data: { ...item.data, [field]: value } }
+        : item
     );
+    setComponents(next);
+    setBuilderByClient((current) => ({ ...current, [activeClient.id]: next }));
   }
 
   function moveSelected(direction: -1 | 1) {
@@ -166,12 +189,14 @@ function App() {
     const copy = [...components];
     [copy[index], copy[target]] = [copy[target], copy[index]];
     setComponents(copy);
+    if (activeClient) setBuilderByClient((current) => ({ ...current, [activeClient.id]: copy }));
   }
 
   function removeSelected() {
     if (!selected) return;
     const next = components.filter((item) => item.id !== selected.id);
     setComponents(next);
+    if (activeClient) setBuilderByClient((current) => ({ ...current, [activeClient.id]: next }));
     setSelectedId(next[0]?.id ?? "");
   }
 
