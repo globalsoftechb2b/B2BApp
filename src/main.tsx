@@ -310,7 +310,13 @@ function App() {
                 <div className="phone-top"><span>☰</span><b>{client}</b><span>⌕ 🛒</span></div>
                 <div className="phone-body" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
                   <div className="app-strip"><span>Welcome to {client}</span><b>●</b></div>
-                  {components.map((item) => (
+                  {components.filter((item) => {
+                    if (activePage === "Home") return item.data.homeVisible !== "false";
+                    if (activePage === "Category") return ["category", "product"].includes(item.type);
+                    if (activePage === "Photo Search") return item.type === "search";
+                    if (activePage === "Share Product") return ["product", "whatsapp"].includes(item.type);
+                    return true;
+                  }).map((item) => (
                     <div key={item.id} className={item.id === selectedId ? "canvas-item selected-canvas" : "canvas-item"} onClick={() => setSelectedId(item.id)}>
                       {item.type === "category" && <div className="categories">{item.data.items.split("|").filter(Boolean).map((x) => <div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>}
                       {item.type === "banner" && <div className="banner"><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>}
@@ -368,7 +374,14 @@ function App() {
       {showClientForm && <Modal title="Create New Shop Client" onClose={()=>setShowClientForm(false)}><Field label="Shop Name" value={newClientName} onChange={setNewClientName}/><Field label="Customer Limit" value={newClientLimit} onChange={setNewClientLimit}/><button className="primary-full" onClick={createClient}>Create Client & Open Dashboard</button></Modal>}
       {showProductForm && <Modal title="Add Product" onClose={()=>setShowProductForm(false)}><Field label="Product Name" value={newProductName} onChange={setNewProductName}/><Field label="Selling Price" value={newProductPrice} onChange={setNewProductPrice}/><Field label="Opening Stock" value={newProductStock} onChange={setNewProductStock}/><button className="primary-full" onClick={createProduct}>Save Product</button></Modal>}
 
-      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false" && x.data.homeVisible !== "false").map(item => <BuilderPreviewComponent key={item.id} item={item} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
+      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => {
+              if (x.data.customerVisible === "false") return false;
+              if (activePage === "Home") return x.data.homeVisible !== "false";
+              if (activePage === "Category") return ["category", "product"].includes(x.type);
+              if (activePage === "Photo Search") return x.type === "search";
+              if (activePage === "Share Product") return ["product", "whatsapp"].includes(x.type);
+              return true;
+            }).map(item => <BuilderPreviewComponent key={item.id} item={item} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
     </div>
   );
 }
