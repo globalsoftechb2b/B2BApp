@@ -96,7 +96,7 @@ function BuilderPreviewComponent({ item, products, onAction }: { item: BuilderCo
   if (item.type === "text") return <h2 className="mobile-heading" {...actionProps} style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
   if (item.type === "image") return <div className="image-block" style={style} {...actionProps}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
   if (item.type === "button") return <button className="mobile-cta" style={style} {...actionProps}>{item.data.label}</button>;
-  if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") return <BuilderProductShare title={item.data.label} products={catalogProducts} style={style} />;\n  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
+  if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") return <BuilderProductShare title={item.data.label} products={catalogProducts} client={activeClient} style={style} />;\n  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
 }
 function App() {
   const [client, setClient] = useState("ABC Traders");
@@ -109,7 +109,6 @@ function App() {
   useEffect(() => saveState("b2bapp:products", products), [products]);
   useEffect(() => saveState("b2bapp:customers", customers), [customers]);
   useEffect(() => saveState("b2bapp:orders", orders), [orders]);
-  useEffect(() => saveState("b2bapp:builders", builderByClient), [builderByClient]);
   const [clientSearch, setClientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
@@ -121,17 +120,29 @@ function App() {
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
   const [newProductStock, setNewProductStock] = useState("0");
-  const [builderByClient, setBuilderByClient] = useState<Record<string, BuilderComponent[]>>(() => loadState("b2bapp:builders", {}));
-  const [components, setComponents] = useState<BuilderComponent[]>(() => {
-    const saved = loadState<Record<string, BuilderComponent[]>>("b2bapp:builders", {});
-    return saved["YA-101"]?.length ? saved["YA-101"] : initialComponents;
+  const [activePage, setActivePage] = useState("Home");
+  const [pagesByClient, setPagesByClient] = useState<Record<string, Record<string, BuilderComponent[]>>>(() => {
+    const saved = loadState<Record<string, Record<string, BuilderComponent[]>>>("b2bapp:pages", {});
+    if (Object.keys(saved).length) return saved;
+    const legacy = loadState<Record<string, BuilderComponent[]>>("b2bapp:builders", {});
+    const ids = Object.keys(legacy);
+    if (!ids.length) return {};
+    return Object.fromEntries(ids.map((id) => [id, {
+      Home: legacy[id]?.length ? legacy[id] : initialComponents,
+      Category: legacy[id]?.filter((x) => x.type === "category" || x.type === "product") ?? [],
+      "Photo Search": [],
+      "Share Product": legacy[id]?.filter((x) => x.type === "product" || x.type === "whatsapp") ?? [],
+    }]));
   });
-  const [selectedId, setSelectedId] = useState("banner-1");
+  const [components, setComponents] = useState<BuilderComponent[]>([]);
+  const [selectedId, setSelectedId] = useState("");
   const [tab, setTab] = useState<Tab>("content");
   const [published, setPublished] = useState(false);
   const [showBuilderPreview, setShowBuilderPreview] = useState(false);
-  const [activePage, setActivePage] = useState("Home");
+  const [showPageForm, setShowPageForm] = useState(false);
+  const [newPageName, setNewPageName] = useState("");
   const [search, setSearch] = useState("");
+  useEffect(() => saveState("b2bapp:pages", pagesByClient), [pagesByClient]);
 
   const selected = useMemo(
     () => components.find((item) => item.id === selectedId) ?? null,
@@ -146,9 +157,12 @@ function App() {
   const activeClient = clients.find((item) => item.name === client) ?? clients[0];
   useEffect(() => {
     if (!activeClient) return;
-    const saved = builderByClient[activeClient.id];
-    setComponents(saved?.length ? saved : initialComponents);
-    setSelectedId(saved?.[0]?.id ?? initialComponents[0]?.id ?? "");
+    const savedPages = pagesByClient[activeClient.id];
+    const legacy = loadState<Record<string, BuilderComponent[]>>("b2bapp:builders", {})[activeClient.id];
+    const home = savedPages?.Home ?? (legacy?.length ? legacy : initialComponents);
+    setActivePage("Home");
+    setComponents(home);
+    setSelectedId(home[0]?.id ?? "");
     setPublished(Boolean(loadState<Record<string, boolean>>("b2bapp:published", {})[activeClient.id]));
   }, [activeClient?.id]);
   const filteredClients = clients.filter((item) => item.name.toLowerCase().includes(clientSearch.toLowerCase()) || item.id.toLowerCase().includes(clientSearch.toLowerCase()));
@@ -159,7 +173,10 @@ function App() {
 
   function publishCurrentApp() {
     if (!activeClient) return;
-    setBuilderByClient((current) => ({ ...current, [activeClient.id]: components }));
+    setPagesByClient((current) => ({
+      ...current,
+      [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: components },
+    }));
     const publishedState = loadState<Record<string, boolean>>("b2bapp:published", {});
     saveState("b2bapp:published", { ...publishedState, [activeClient.id]: true });
     setPublished(true);
@@ -177,7 +194,12 @@ function App() {
     };
     setComponents((items) => {
       const updated = [...items, next];
-      if (activeClient) setBuilderByClient((current) => ({ ...current, [activeClient.id]: updated }));
+      if (activeClient) {
+        setPagesByClient((current) => ({
+          ...current,
+          [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: updated },
+        }));
+      }
       return updated;
     });
     setSelectedId(id);
@@ -193,7 +215,7 @@ function App() {
         : item
     );
     setComponents(next);
-    setBuilderByClient((current) => ({ ...current, [activeClient.id]: next }));
+    setPagesByClient((current) => ({ ...current, [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: next } }));
   }
 
   function moveSelected(direction: -1 | 1) {
@@ -203,15 +225,44 @@ function App() {
     const copy = [...components];
     [copy[index], copy[target]] = [copy[target], copy[index]];
     setComponents(copy);
-    if (activeClient) setBuilderByClient((current) => ({ ...current, [activeClient.id]: copy }));
+    if (activeClient) setPagesByClient((current) => ({ ...current, [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: copy } }));
   }
 
   function removeSelected() {
     if (!selected) return;
     const next = components.filter((item) => item.id !== selected.id);
     setComponents(next);
-    if (activeClient) setBuilderByClient((current) => ({ ...current, [activeClient.id]: next }));
+    if (activeClient) setPagesByClient((current) => ({ ...current, [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: next } }));
     setSelectedId(next[0]?.id ?? "");
+  }
+
+  function switchPage(page: string) {
+    if (!activeClient || page === activePage) return;
+    setPagesByClient((current) => ({
+      ...current,
+      [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: components },
+    }));
+    const next = pagesByClient[activeClient.id]?.[page] ?? [];
+    setActivePage(page);
+    setComponents(next);
+    setSelectedId(next[0]?.id ?? "");
+    setTab("content");
+  }
+
+  function createBuilderPage() {
+    const name = newPageName.trim();
+    if (!name || !activeClient) return;
+    const existing = Object.keys(pagesByClient[activeClient.id] ?? {});
+    if (existing.some((x) => x.toLowerCase() === name.toLowerCase())) return;
+    setPagesByClient((current) => ({
+      ...current,
+      [activeClient.id]: { ...(current[activeClient.id] ?? {}), [name]: [] },
+    }));
+    setActivePage(name);
+    setComponents([]);
+    setSelectedId("");
+    setShowPageForm(false);
+    setNewPageName("");
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
@@ -324,13 +375,7 @@ function App() {
                 <div className="phone-top"><span>☰</span><b>{client}</b><span>⌕ 🛒</span></div>
                 <div className="phone-body" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
                   <div className="app-strip"><span>Welcome to {client}</span><b>●</b></div>
-                  {components.filter((item) => {
-                    if (activePage === "Home") return item.data.homeVisible !== "false";
-                    if (activePage === "Category") return ["category", "product"].includes(item.type);
-                    if (activePage === "Photo Search") return item.type === "search";
-                    if (activePage === "Share Product") return ["product", "whatsapp"].includes(item.type);
-                    return true;
-                  }).map((item) => (
+                  {components.filter((item) => item.data.homeVisible !== "false").map((item) => (
                     <div key={item.id} className={item.id === selectedId ? "canvas-item selected-canvas" : "canvas-item"} onClick={() => setSelectedId(item.id)}>
                       {item.type === "category" && <div className="categories">{item.data.items.split("|").filter(Boolean).map((x) => <div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>}
                       {item.type === "banner" && <div className="banner"><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>}
@@ -378,24 +423,25 @@ function App() {
 
           <section className="pagebar">
             <b>Page Management</b>
-            {["Home", "Category", "Photo Search", "Share Product"].map((page, i) => <button key={page} className={activePage === page ? "page active" : "page"} onClick={() => setActivePage(page)}>{page} <small>Page {i + 1}</small></button>)}
-            <button className="page add" onClick={() => setActivePage("New Page")}>＋ Add Page</button>
+            {(Object.keys(pagesByClient[activeClient?.id ?? ""] ?? { Home: [], Category: [], "Photo Search": [], "Share Product": [] })).map((page, i) => <button key={page} className={activePage === page ? "page active" : "page"} onClick={() => switchPage(page)}>{page} <small>Page {i + 1}</small></button>)}
+            <button className="page add" onClick={() => { setNewPageName(""); setShowPageForm(true); }}>＋ Add Page</button>
           </section>
           </>}
         </main>
       </div>
 
+      {showPageForm && <Modal title="Add Builder Page" onClose={()=>setShowPageForm(false)}><Field label="Page Name" value={newPageName} onChange={setNewPageName}/><button className="primary-full" onClick={createBuilderPage}>Create Page</button></Modal>}
       {showClientForm && <Modal title="Create New Shop Client" onClose={()=>setShowClientForm(false)}><Field label="Shop Name" value={newClientName} onChange={setNewClientName}/><Field label="Customer Limit" value={newClientLimit} onChange={setNewClientLimit}/><button className="primary-full" onClick={createClient}>Create Client & Open Dashboard</button></Modal>}
       {showProductForm && <Modal title="Add Product" onClose={()=>setShowProductForm(false)}><Field label="Product Name" value={newProductName} onChange={setNewProductName}/><Field label="Selling Price" value={newProductPrice} onChange={setNewProductPrice}/><Field label="Opening Stock" value={newProductStock} onChange={setNewProductStock}/><button className="primary-full" onClick={createProduct}>Save Product</button></Modal>}
 
-      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => {
-              if (x.data.customerVisible === "false") return false;
-              if (activePage === "Home") return x.data.homeVisible !== "false";
-              if (activePage === "Category") return ["category", "product"].includes(x.type);
-              if (activePage === "Photo Search") return x.type === "search";
-              if (activePage === "Share Product") return ["product", "whatsapp"].includes(x.type);
-              return true;
-            }).map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} onAction={(target) => { if (target.data.action === "Open External Link" && target.data.target) window.open(target.data.target, "_blank"); else if (target.data.action === "Open WhatsApp") window.open("https://wa.me/?text=" + encodeURIComponent(target.title + " — " + window.location.origin), "_blank"); }} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
+      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false" && x.data.homeVisible !== "false").map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} onAction={(target) => {
+                const action = target.data.action || "None";
+                if (action === "Open External Link" && target.data.target) window.open(target.data.target, "_blank");
+                else if (action === "Open WhatsApp") window.open("https://wa.me/?text=" + encodeURIComponent(target.title + " — " + window.location.origin + "/?shop=" + activeClient.slug), "_blank");
+                else if (action === "Open Products") setView("store");
+                else if (action === "Open Category") setView("store");
+                else if (action === "Open Product") setView("store");
+              }} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
     </div>
   );
 }
@@ -503,11 +549,11 @@ function changeStatus(order:Order,next:Order["status"]){if(order.status===next)r
 return <section className="page-view"><div className="page-title"><div><span className="eyebrow">SHOP OPERATIONS</span><h1>Orders</h1><p>Manage customer B2B orders from one place.</p></div><div className="title-actions"><button className="ghost-dark" onClick={()=>setOrders(x=>[...x].sort((a,b)=>b.id.localeCompare(a.id)))}>↻ Refresh</button></div></div><div className="stats-grid"><div className="stat-card"><span>Total Orders</span><strong>{orders.length}</strong><small>All order records</small></div><div className="stat-card"><span>Pending</span><strong>{orders.filter(x=>x.status==="Pending").length}</strong><small>Needs action</small></div><div className="stat-card"><span>Confirmed / Packed</span><strong>{orders.filter(x=>x.status==="Confirmed"||x.status==="Packed").length}</strong><small>In fulfillment</small></div><div className="stat-card"><span>Order Value</span><strong>₹{orders.reduce((s,x)=>s+x.amount,0).toLocaleString("en-IN")}</strong><small>Current records</small></div></div><div className="toolbar"><div className="search-wide">⌕<input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search order, customer or phone..." /></div><span>{filtered.length} orders</span></div><div className="card table-card"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>ITEMS</th><th>AMOUNT</th><th>STATUS</th><th>CREATED</th><th>ACTION</th></tr></thead><tbody>{filtered.map(o=><tr key={o.id}><td><button className="link-button" onClick={()=>setSelectedOrder(o)}><b>{o.id}</b></button></td><td><div className="table-client"><div className="client-mark">◉</div><span><b>{o.customer}</b><small>{o.phone}</small></span></div></td><td>{o.items}</td><td><b>₹{o.amount.toLocaleString("en-IN")}</b></td><td><span className={statusClass(o.status)}>{o.status}</span></td><td>{o.createdAt}</td><td><select className="order-status" value={o.status} onChange={e=>changeStatus(o,e.target.value as Order["status"])} disabled={o.status==="Delivered"||o.status==="Cancelled"}><option>Pending</option><option>Confirmed</option><option>Packed</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></td></tr>)}</tbody></table>{filtered.length===0&&<div className="empty">No orders found.</div>}</div>{selectedOrder&&<Modal title={selectedOrder.id} onClose={()=>setSelectedOrder(null)}><div className="order-detail-head"><div><span>Customer</span><b>{selectedOrder.customer}</b></div><div><span>Mobile</span><b>{selectedOrder.phone}</b></div><div><span>Status</span><b>{selectedOrder.status}</b></div><div><span>Created</span><b>{selectedOrder.createdAt}</b></div></div><div className="order-address"><span>Delivery Address</span><b>{selectedOrder.address||"—"}</b></div><div className="order-lines"><div className="order-line header"><span>PRODUCT</span><span>SKU</span><span>QTY</span><span>RATE</span><span>AMOUNT</span></div>{selectedOrder.lines?.map(line=><div className="order-line" key={line.productId}><span><b>{line.name}</b></span><span>{line.sku}</span><span>{line.qty}</span><span>₹{line.unitPrice.toLocaleString("en-IN")}</span><span>₹{line.lineTotal.toLocaleString("en-IN")}</span></div>)||<div className="empty">Legacy order: item-level details are not available.</div>}</div><div className="order-total"><span>Total Qty <b>{selectedOrder.items}</b></span><strong>₹{selectedOrder.amount.toLocaleString("en-IN")}</strong></div></Modal>}</section>}
 
 function Modal({title,onClose,children,wide=false}:{title:string;onClose:()=>void;children:ReactNode;wide?:boolean}){return <div className="modal-backdrop" onClick={onClose}><div className={wide?"modal modal-wide":"modal"} onClick={e=>e.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">B2B PLATFORM</span><h2>{title}</h2></div><button onClick={onClose}>×</button></div>{children}</div></div>}
-function BuilderProductShare({ title, products, style }: { title:string; products:Product[]; style:React.CSSProperties }) {
+function BuilderProductShare({ title, products, client, style }: { title:string; products:Product[]; client:Client; style:React.CSSProperties }) {
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || "");
   const product = products.find(p=>p.id===selectedProductId) || products[0];
   if (!product) return <div className="whatsapp-button" style={style}>◉ {title} — No active products</div>;
-  const shopSlug = product.clientId ? products.find(p=>p.clientId===product.clientId)?.clientId || product.clientId : "";\n  const appUrl = window.location.origin + "/?shop=" + encodeURIComponent(shopSlug);
+  const shopSlug = client.slug;\n  const appUrl = window.location.origin + "/?shop=" + encodeURIComponent(shopSlug);
   const shareText = `Product: ${product.name}\nPrice: ${product.price}\nSKU: ${product.sku}\nOrder: ${appUrl}`;
   function share() {
     if (navigator.share) {
