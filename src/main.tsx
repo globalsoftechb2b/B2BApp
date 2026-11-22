@@ -507,7 +507,7 @@ function BuilderProductShare({ title, products, style }: { title:string; product
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || "");
   const product = products.find(p=>p.id===selectedProductId) || products[0];
   if (!product) return <div className="whatsapp-button" style={style}>◉ {title} — No active products</div>;
-  const appUrl = window.location.origin + "/?shop=" + encodeURIComponent(product.clientId || "");
+  const shopSlug = product.clientId ? products.find(p=>p.clientId===product.clientId)?.clientId || product.clientId : "";\n  const appUrl = window.location.origin + "/?shop=" + encodeURIComponent(shopSlug);
   const shareText = `Product: ${product.name}\nPrice: ${product.price}\nSKU: ${product.sku}\nOrder: ${appUrl}`;
   function share() {
     if (navigator.share) {
