@@ -96,14 +96,7 @@ function BuilderPreviewComponent({ item, products }: { item: BuilderComponent; p
   if (item.type === "text") return <h2 className="mobile-heading" style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
   if (item.type === "image") return <div className="image-block" style={style}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
   if (item.type === "button") return <button className="mobile-cta" style={style}>{item.data.label}</button>;
-  if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") {
-    const shareProduct = catalogProducts[0];
-    const shareText = shareProduct
-      ? `${shareProduct.name} — ${shareProduct.price} — SKU ${shareProduct.sku}\\n${window.location.origin}`
-      : item.data.label + " — " + window.location.origin;
-    return <button className="whatsapp-button" style={style} onClick={() => window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank")}>◉ {item.data.label}{shareProduct ? ` • ${shareProduct.name}` : ""}</button>;
-  }
-  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
+  if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") return <BuilderProductShare title={item.data.label} products={catalogProducts} style={style} />;\n  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
 }
 function App() {
   const [client, setClient] = useState("ABC Traders");
@@ -509,7 +502,30 @@ function OrdersView({client,orders,setOrders,setProducts}:{client:Client;orders:
 function changeStatus(order:Order,next:Order["status"]){if(order.status===next)return;if(order.status==="Delivered"&&next!=="Delivered")return;if(order.status==="Cancelled"&&next!=="Cancelled")return;if(next==="Cancelled"&&order.status!=="Cancelled"){setProducts(prev=>prev.map(p=>{const line=order.lines?.find(x=>x.productId===p.id);return line?{...p,stock:p.stock+line.qty}:p;}));}setOrders(x=>x.map(v=>v.id===order.id?{...v,status:next}:v));}
 return <section className="page-view"><div className="page-title"><div><span className="eyebrow">SHOP OPERATIONS</span><h1>Orders</h1><p>Manage customer B2B orders from one place.</p></div><div className="title-actions"><button className="ghost-dark" onClick={()=>setOrders(x=>[...x].sort((a,b)=>b.id.localeCompare(a.id)))}>↻ Refresh</button></div></div><div className="stats-grid"><div className="stat-card"><span>Total Orders</span><strong>{orders.length}</strong><small>All order records</small></div><div className="stat-card"><span>Pending</span><strong>{orders.filter(x=>x.status==="Pending").length}</strong><small>Needs action</small></div><div className="stat-card"><span>Confirmed / Packed</span><strong>{orders.filter(x=>x.status==="Confirmed"||x.status==="Packed").length}</strong><small>In fulfillment</small></div><div className="stat-card"><span>Order Value</span><strong>₹{orders.reduce((s,x)=>s+x.amount,0).toLocaleString("en-IN")}</strong><small>Current records</small></div></div><div className="toolbar"><div className="search-wide">⌕<input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search order, customer or phone..." /></div><span>{filtered.length} orders</span></div><div className="card table-card"><table><thead><tr><th>ORDER</th><th>CUSTOMER</th><th>ITEMS</th><th>AMOUNT</th><th>STATUS</th><th>CREATED</th><th>ACTION</th></tr></thead><tbody>{filtered.map(o=><tr key={o.id}><td><button className="link-button" onClick={()=>setSelectedOrder(o)}><b>{o.id}</b></button></td><td><div className="table-client"><div className="client-mark">◉</div><span><b>{o.customer}</b><small>{o.phone}</small></span></div></td><td>{o.items}</td><td><b>₹{o.amount.toLocaleString("en-IN")}</b></td><td><span className={statusClass(o.status)}>{o.status}</span></td><td>{o.createdAt}</td><td><select className="order-status" value={o.status} onChange={e=>changeStatus(o,e.target.value as Order["status"])} disabled={o.status==="Delivered"||o.status==="Cancelled"}><option>Pending</option><option>Confirmed</option><option>Packed</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option></select></td></tr>)}</tbody></table>{filtered.length===0&&<div className="empty">No orders found.</div>}</div>{selectedOrder&&<Modal title={selectedOrder.id} onClose={()=>setSelectedOrder(null)}><div className="order-detail-head"><div><span>Customer</span><b>{selectedOrder.customer}</b></div><div><span>Mobile</span><b>{selectedOrder.phone}</b></div><div><span>Status</span><b>{selectedOrder.status}</b></div><div><span>Created</span><b>{selectedOrder.createdAt}</b></div></div><div className="order-address"><span>Delivery Address</span><b>{selectedOrder.address||"—"}</b></div><div className="order-lines"><div className="order-line header"><span>PRODUCT</span><span>SKU</span><span>QTY</span><span>RATE</span><span>AMOUNT</span></div>{selectedOrder.lines?.map(line=><div className="order-line" key={line.productId}><span><b>{line.name}</b></span><span>{line.sku}</span><span>{line.qty}</span><span>₹{line.unitPrice.toLocaleString("en-IN")}</span><span>₹{line.lineTotal.toLocaleString("en-IN")}</span></div>)||<div className="empty">Legacy order: item-level details are not available.</div>}</div><div className="order-total"><span>Total Qty <b>{selectedOrder.items}</b></span><strong>₹{selectedOrder.amount.toLocaleString("en-IN")}</strong></div></Modal>}</section>}
 
-function Modal({title,onClose,children,wide=false}:{title:string;onClose:()=>void;children:ReactNode;wide?:boolean}){return <div className="modal-backdrop" onClick={onClose}><div className={wide?"modal modal-wide":"modal"} onClick={e=>e.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">B2B PLATFORM</span><h2>{title}</h2></div><button onClick={onClose}>×</button></div>{children}</div></div>}\nfunction BuilderPhotoSearch({ title, products, style }: { title:string; products:Product[]; style:React.CSSProperties }) {
+function Modal({title,onClose,children,wide=false}:{title:string;onClose:()=>void;children:ReactNode;wide?:boolean}){return <div className="modal-backdrop" onClick={onClose}><div className={wide?"modal modal-wide":"modal"} onClick={e=>e.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">B2B PLATFORM</span><h2>{title}</h2></div><button onClick={onClose}>×</button></div>{children}</div></div>}
+function BuilderProductShare({ title, products, style }: { title:string; products:Product[]; style:React.CSSProperties }) {
+  const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || "");
+  const product = products.find(p=>p.id===selectedProductId) || products[0];
+  if (!product) return <div className="whatsapp-button" style={style}>◉ {title} — No active products</div>;
+  const appUrl = window.location.origin + "/?shop=" + encodeURIComponent(product.clientId || "");
+  const shareText = `Product: ${product.name}\nPrice: ${product.price}\nSKU: ${product.sku}\nOrder: ${appUrl}`;
+  function share() {
+    if (navigator.share) {
+      navigator.share({ title: product.name, text: shareText, url: appUrl }).catch(()=>{});
+      return;
+    }
+    window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank");
+  }
+  return <div style={style}>
+    <div className="share-product-card">
+      <div className="product-image">◇</div>
+      <div><b>{product.name}</b><span>{product.price} • {product.sku}</span></div>
+      <select value={product.id} onChange={e=>setSelectedProductId(e.target.value)}>{products.map(p=><option key={p.id} value={p.id}>{p.name} — {p.price}</option>)}</select>
+      <button className="whatsapp-button" onClick={share}>◉ {title}</button>
+    </div>
+  </div>;
+}
+\nfunction BuilderPhotoSearch({ title, products, style }: { title:string; products:Product[]; style:React.CSSProperties }) {
   const [query, setQuery] = useState("");
   const [matched, setMatched] = useState<Product[]>([]);
   function findProducts(value:string) {
