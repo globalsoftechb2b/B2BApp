@@ -1,4 +1,5 @@
-import { StrictMode, useEffect, useMemo, useState } from "react";\nimport type { DragEvent, ReactNode, Dispatch, SetStateAction } from "react";
+import { StrictMode, useEffect, useMemo, useState } from "react";
+import type { DragEvent, ReactNode, Dispatch, SetStateAction } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
@@ -57,7 +58,8 @@ const icon = (name: string) => <span className="ico">{name}</span>;
 const initialClients: Client[] = [{id:"YA-101",name:"ABC Traders",slug:"abc-traders",limit:1000,status:"Active",builder:true,products:124,customers:438},{id:"YA-102",name:"Global Fashion",slug:"global-fashion",limit:500,status:"Active",builder:true,products:86,customers:217},{id:"YA-103",name:"Shree Enterprises",slug:"shree-enterprises",limit:250,status:"Inactive",builder:false,products:42,customers:61}];
 const initialProducts: Product[] = [{id:"P-1001",name:"Smart Watch",sku:"SW-001",category:"Electronics",price:"₹1,999",stock:84,status:"Active",clientId:"YA-101"},{id:"P-1002",name:"Sports Shoes",sku:"SS-204",category:"Footwear",price:"₹2,499",stock:42,status:"Active",clientId:"YA-101"},{id:"P-1003",name:"Cotton Shirt",sku:"CS-310",category:"Fashion",price:"₹899",stock:126,status:"Active",clientId:"YA-101"},{id:"P-1004",name:"Travel Bag",sku:"TB-118",category:"Bags",price:"₹1,299",stock:0,status:"Draft",clientId:"YA-101"}];
 
-const initialCustomers:Customer[]=[{id:"C-1001",name:"Rahul Traders",phone:"+91 98765 43210",email:"rahul@example.com",address:"Mumbai, Maharashtra",orders:18,status:"Active",clientId:"YA-101"},{id:"C-1002",name:"Sharma Stores",phone:"+91 98200 11223",email:"sharma@example.com",address:"Thane, Maharashtra",orders:11,status:"Active",clientId:"YA-101"},{id:"C-1003",name:"M K Enterprises",phone:"+91 97690 44556",email:"mk@example.com",address:"Kalyan, Maharashtra",orders:7,status:"Active",clientId:"YA-101"}];\nconst initialOrders:Order[]=[{id:"ORD-1001",customer:"Rahul Traders",phone:"+91 98765 43210",customerId:"C-1001",clientId:"YA-101",items:4,amount:12460,status:"Pending",createdAt:"Today, 10:42 AM"},{id:"ORD-1002",customer:"Sharma Stores",phone:"+91 98200 11223",customerId:"C-1002",clientId:"YA-101",items:7,amount:28750,status:"Confirmed",createdAt:"Today, 09:18 AM"},{id:"ORD-0999",customer:"M K Enterprises",phone:"+91 97690 44556",customerId:"C-1003",clientId:"YA-101",items:3,amount:8490,status:"Packed",createdAt:"Yesterday, 05:31 PM"}];
+const initialCustomers:Customer[]=[{id:"C-1001",name:"Rahul Traders",phone:"+91 98765 43210",email:"rahul@example.com",address:"Mumbai, Maharashtra",orders:18,status:"Active",clientId:"YA-101"},{id:"C-1002",name:"Sharma Stores",phone:"+91 98200 11223",email:"sharma@example.com",address:"Thane, Maharashtra",orders:11,status:"Active",clientId:"YA-101"},{id:"C-1003",name:"M K Enterprises",phone:"+91 97690 44556",email:"mk@example.com",address:"Kalyan, Maharashtra",orders:7,status:"Active",clientId:"YA-101"}];
+const initialOrders:Order[]=[{id:"ORD-1001",customer:"Rahul Traders",phone:"+91 98765 43210",customerId:"C-1001",clientId:"YA-101",items:4,amount:12460,status:"Pending",createdAt:"Today, 10:42 AM"},{id:"ORD-1002",customer:"Sharma Stores",phone:"+91 98200 11223",customerId:"C-1002",clientId:"YA-101",items:7,amount:28750,status:"Confirmed",createdAt:"Today, 09:18 AM"},{id:"ORD-0999",customer:"M K Enterprises",phone:"+91 97690 44556",customerId:"C-1003",clientId:"YA-101",items:3,amount:8490,status:"Packed",createdAt:"Yesterday, 05:31 PM"}];
 function loadState<T>(key:string,fallback:T):T{
   try{const raw=localStorage.getItem(key);if(!raw)return fallback;const parsed=JSON.parse(raw);return parsed as T}catch{return fallback}
 }
@@ -97,7 +99,8 @@ function BuilderPreviewComponent({ item, products, client, onAction }: { item: B
   if (item.type === "text") return <h2 className="mobile-heading" {...actionProps} style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
   if (item.type === "image") return <div className="image-block" style={style} {...actionProps}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
   if (item.type === "button") return <button className="mobile-cta" style={style} {...actionProps}>{item.data.label}</button>;
-  if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") return <BuilderProductShare title={item.data.label} products={catalogProducts} client={activeClient} style={style} />;\n  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
+  if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") return <BuilderProductShare title={item.data.label} products={catalogProducts} client={activeClient} style={style} />;
+  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
 }
 function App() {
   const [client, setClient] = useState("ABC Traders");
@@ -347,7 +350,9 @@ function App() {
           {view==="clients" && <ClientsView clients={filteredClients} search={clientSearch} setSearch={setClientSearch} onAdd={()=>setShowClientForm(true)} onToggle={toggleClientStatus} onOpen={(name)=>{setClient(name);setView("shop")}}/>}
           {view==="shop" && <ShopDashboard client={activeClient} products={clientProducts} orders={clientOrders} setView={setView} onAddProduct={()=>setShowProductForm(true)} onOpenOwner={()=>{setShopOwnerMode(true);setView("shop")}}/>}
           {view==="products" && <ProductsView products={filteredProducts} search={productSearch} setSearch={setProductSearch} onAdd={()=>{setEditingProduct(null);setNewProductName("");setNewProductPrice("");setNewProductStock("0");setShowProductForm(true)}} onEdit={openProductEdit} onDelete={deleteProduct}/>} 
-          {view==="customers" && <CustomersView client={activeClient} customers={clientCustomers} orders={clientOrders} setCustomers={setCustomers}/>}\n          {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders} setProducts={setProducts}/>}\n          {view==="store" && <CustomerStorefront client={activeClient} products={clientProducts} customers={clientCustomers} setCustomers={setCustomers} setClients={setClients} setOrders={setOrders}/>} 
+          {view==="customers" && <CustomersView client={activeClient} customers={clientCustomers} orders={clientOrders} setCustomers={setCustomers}/>}
+          {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders} setProducts={setProducts}/>}
+          {view==="store" && <CustomerStorefront client={activeClient} products={clientProducts} customers={clientCustomers} setCustomers={setCustomers} setClients={setClients} setOrders={setOrders}/>} 
           {view==="builder" && <>
           <section className="clientbar">
             <label className="client-select">Client
@@ -460,7 +465,9 @@ function App() {
                 else if (action === "Open Products") setView("store");
                 else if (action === "Open Category") setView("store");
                 else if (action === "Open Product") setView("store");
-              }} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><label className="toggle-row"><input type="checkbox" checked={previewLoggedIn} onChange={(e) => setPreviewLoggedIn(e.target.checked)} /> Simulate logged-in customer</label><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
+              }} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><label className="toggle-row"><input type="checkbox" checked={previewLoggedIn} onChange={(e) => setPreviewLoggedIn(e.target.checked)} /> Simulate logged-in customer</label><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}
+
+      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
     </div>
   );
 }
@@ -591,7 +598,8 @@ function BuilderProductShare({ title, products, client, style }: { title:string;
     </div>
   </div>;
 }
-\nfunction BuilderPhotoSearch({ title, products, style }: { title:string; products:Product[]; style:React.CSSProperties }) {
+
+function BuilderPhotoSearch({ title, products, style }: { title:string; products:Product[]; style:React.CSSProperties }) {
   const [query, setQuery] = useState("");
   const [matched, setMatched] = useState<Product[]>([]);
   function findProducts(value:string) {
