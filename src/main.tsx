@@ -105,7 +105,7 @@ function App() {
   const [client, setClient] = useState("ABC Traders");
   const [view, setView] = useState<AppView>("builder");
   const [shopOwnerMode, setShopOwnerMode] = useState(false);
-  const [ownerSession, setOwnerSession] = useState<string | null>(() => loadState("b2bapp:ownerSession", null));
+  const [ownerSession, setOwnerSession] = useState<string | null>(null);
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPassword, setOwnerPassword] = useState("");
   const [ownerError, setOwnerError] = useState("");
@@ -117,7 +117,7 @@ function App() {
   useEffect(() => saveState("b2bapp:products", products), [products]);
   useEffect(() => saveState("b2bapp:customers", customers), [customers]);
   useEffect(() => saveState("b2bapp:orders", orders), [orders]);
-  useEffect(() => saveState("b2bapp:ownerSession", ownerSession), [ownerSession]);
+  useEffect(() => { fetch("/api/auth/me", { credentials: "include" }).then(async (response) => { if (!response.ok) return null; return response.json(); }).then((data) => { if (data?.clientId) { setOwnerSession(data.clientId); setShopOwnerMode(true); setView("shop"); } }).catch(() => {}); }, []);
   const [clientSearch, setClientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
@@ -345,20 +345,36 @@ function App() {
     setView("shop");
   }
 
-  function loginShopOwner() {
+  async function loginShopOwner() {
     if (!activeClient) return;
     const email = ownerEmail.trim().toLowerCase();
+    if (!email || !ownerPassword) {
+      setOwnerError("Email and password are required.");
+      return;
+    }
     const account = clients.find((item) => item.id === activeClient.id);
     if (!account || account.status !== "Active") {
       setOwnerError("This shop is inactive. Contact the Super Admin.");
       return;
     }
-    if (email !== account.ownerEmail?.toLowerCase() || ownerPassword !== account.ownerPassword) {
-      setOwnerError("Invalid shop owner email or password.");
-      return;
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password: ownerPassword })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.clientId !== account.id) {
+        setOwnerError(response.status === 401 ? "Invalid shop owner email or password." : "Owner authentication service is unavailable.");
+        return;
+      }
+      setOwnerSession(data.clientId);
+      setOwnerError("");
+      setOwnerPassword("");
+    } catch {
+      setOwnerError("Owner authentication service is unavailable.");
     }
-    setOwnerSession(account.id);
-    setOwnerError("");
   }
 
   function handleDragStart(event: DragEvent<HTMLButtonElement>, type: ComponentType) {
@@ -379,7 +395,7 @@ function App() {
           <span>▤ Subscriptions</span>
           <span>▥ Reports</span>
         </nav> : <div className="owner-top-title"><span>Shop Owner App</span><small>Manage your B2B business</small></div>}
-        <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { setShopOwnerMode(false); setOwnerSession(null); setOwnerEmail(""); setOwnerPassword(""); setOwnerError(""); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
+        <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {}); setShopOwnerMode(false); setOwnerSession(null); setOwnerEmail(""); setOwnerPassword(""); setOwnerError(""); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
       </header>
 
       <div className={shopOwnerMode ? "workspace owner-workspace" : "workspace"}>
