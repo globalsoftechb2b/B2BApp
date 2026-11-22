@@ -69,7 +69,7 @@ function RangeField({ label, value, min, max, onChange }: { label:string; value:
   return <label className="field">{label}<input type="range" min={min} max={max} value={Number(value)} onChange={(e)=>onChange(e.target.value)} /><small>{value}px</small></label>;
 }
 
-function BuilderPreviewComponent({ item, products }: { item: BuilderComponent; products: Product[] }) {
+function BuilderPreviewComponent({ item, products, onAction }: { item: BuilderComponent; products: Product[]; onAction?: (item:BuilderComponent)=>void }) {
   const radius = Number(item.data.radius || 16);
   const spacing = Number(item.data.spacing || 16);
   const style = {
@@ -90,12 +90,12 @@ function BuilderPreviewComponent({ item, products }: { item: BuilderComponent; p
   })) || [];
   const visibleProducts = item.data.source === "catalog" ? catalogProducts : manualProducts;
 
-  if (item.type === "banner") return <div className="banner" style={style}><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>;
-  if (item.type === "category") return <div className="categories" style={style}>{item.data.items.split("|").filter(Boolean).map(x=><div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>;
-  if (item.type === "product") return <div className="product-grid" style={style}>{visibleProducts.map((p)=><div className="product-card" key={p.id}><div className="product-image">◇</div><b>{p.name}</b><span>{p.price}</span><button disabled={p.stock===0}>Add</button></div>)}{visibleProducts.length===0&&<div className="empty">No active catalog products.</div>}</div>;
-  if (item.type === "text") return <h2 className="mobile-heading" style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
-  if (item.type === "image") return <div className="image-block" style={style}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
-  if (item.type === "button") return <button className="mobile-cta" style={style}>{item.data.label}</button>;
+  const actionProps = onAction ? { onClick: () => onAction(item), role: "button" as const } : {};\n  if (item.type === "banner") return <div className="banner" style={style} {...actionProps}><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>;
+  if (item.type === "category") return <div className="categories" style={style} {...actionProps}>{item.data.items.split("|").filter(Boolean).map(x=><div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>;
+  if (item.type === "product") return <div className="product-grid" style={style} {...actionProps}>{visibleProducts.map((p)=><div className="product-card" key={p.id}><div className="product-image">◇</div><b>{p.name}</b><span>{p.price}</span><button disabled={p.stock===0}>Add</button></div>)}{visibleProducts.length===0&&<div className="empty">No active catalog products.</div>}</div>;
+  if (item.type === "text") return <h2 className="mobile-heading" {...actionProps} style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
+  if (item.type === "image") return <div className="image-block" style={style} {...actionProps}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
+  if (item.type === "button") return <button className="mobile-cta" style={style} {...actionProps}>{item.data.label}</button>;
   if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") return <BuilderProductShare title={item.data.label} products={catalogProducts} style={style} />;\n  return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
 }
 function App() {
@@ -395,7 +395,7 @@ function App() {
               if (activePage === "Photo Search") return x.type === "search";
               if (activePage === "Share Product") return ["product", "whatsapp"].includes(x.type);
               return true;
-            }).map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
+            }).map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} onAction={(target) => { if (target.data.action === "Open External Link" && target.data.target) window.open(target.data.target, "_blank"); else if (target.data.action === "Open WhatsApp") window.open("https://wa.me/?text=" + encodeURIComponent(target.title + " — " + window.location.origin), "_blank"); }} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
     </div>
   );
 }
