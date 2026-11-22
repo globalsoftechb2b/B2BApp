@@ -180,7 +180,11 @@ function App() {
     setPublished(Boolean(loadState<Record<string, boolean>>("b2bapp:published", {})[activeClient.id]));
   }, [activeClient?.id]);
   const filteredClients = clients.filter((item) => item.name.toLowerCase().includes(clientSearch.toLowerCase()) || item.id.toLowerCase().includes(clientSearch.toLowerCase()));
-  const clientProducts = products.filter((item) => item.clientId === activeClient?.id);
+  const effectiveClientId = shopOwnerMode && ownerSession ? ownerSession : activeClient?.id;
+  const effectiveClient = clients.find((item) => item.id === effectiveClientId) ?? activeClient;
+  const clientProducts = products.filter((item) => item.clientId === effectiveClientId);
+  const clientCustomers = customers.filter((item) => item.clientId === effectiveClientId);
+  const clientOrders = orders.filter((item) => item.clientId === effectiveClientId);
   const clientCustomers = customers.filter((item) => item.clientId === activeClient?.id);
   const clientOrders = orders.filter((item) => item.clientId === activeClient?.id);
   const filteredProducts = clientProducts.filter((item) => item.name.toLowerCase().includes(productSearch.toLowerCase()) || item.sku.toLowerCase().includes(productSearch.toLowerCase()));
