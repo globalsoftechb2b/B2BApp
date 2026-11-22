@@ -111,13 +111,13 @@ function App() {
     setSelectedId(next[0]?.id ?? "");
   }
 
-  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     const type = event.dataTransfer.getData("component-type") as ComponentType;
     if (type) addComponent(type);
   }
 
-  function handleDragStart(event: React.DragEvent<HTMLButtonElement>, type: ComponentType) {
+  function handleDragStart(event: DragEvent<HTMLButtonElement>, type: ComponentType) {
     event.dataTransfer.setData("component-type", type);
   }
 
