@@ -118,7 +118,19 @@ function App() {
   useEffect(() => saveState("b2bapp:customers", customers), [customers]);
   useEffect(() => saveState("b2bapp:orders", orders), [orders]);
   useEffect(() => { fetch("/api/auth/me", { credentials: "include" }).then(async (response) => { if (!response.ok) return null; return response.json(); }).then((data) => { if (data?.clientId) { setOwnerSession(data.clientId); setShopOwnerMode(true); setView("shop"); } }).catch(() => {}); }, []);
-  useEffect(() => {\n    if (!ownerSession) return;\n    fetch("/api/owner/data", { credentials: "include" })\n      .then(async (response) => response.ok ? response.json() : null)\n      .then((data) => {\n        if (!data || data.clientId !== ownerSession) return;\n        setProducts(data.products ?? []);\n        setCustomers(data.customers ?? []);\n        setOrders(data.orders ?? []);\n      })\n      .catch(() => {});\n  }, [ownerSession]);\n  const [clientSearch, setClientSearch] = useState("");
+  useEffect(() => {
+    if (!ownerSession) return;
+    fetch("/api/owner/data", { credentials: "include" })
+      .then(async (response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data || data.clientId !== ownerSession) return;
+        setProducts(data.products ?? []);
+        setCustomers(data.customers ?? []);
+        setOrders(data.orders ?? []);
+      })
+      .catch(() => {});
+  }, [ownerSession]);
+  const [clientSearch, setClientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
@@ -168,7 +180,12 @@ function App() {
   const slug = client.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const activeClient = clients.find((item) => item.name === client) ?? clients[0];
   const ownerClient = ownerSession ? clients.find((item) => item.id === ownerSession) : null;
-  useEffect(() => {\n    if (shopOwnerMode && ownerSession) {\n      const owner = clients.find((item) => item.id === ownerSession);\n      if (owner && client !== owner.name) setClient(owner.name);\n    }\n  }, [shopOwnerMode, ownerSession, clients, client]);\n  useEffect(() => {
+  useEffect(() => {
+    if (shopOwnerMode && ownerSession) {
+      const owner = clients.find((item) => item.id === ownerSession);
+      if (owner && client !== owner.name) setClient(owner.name);
+    }
+  }, [shopOwnerMode, ownerSession, clients, client]);\n  useEffect(() => {
     if (!activeClient) return;
     const savedPages = pagesByClient[activeClient.id];
     const legacy = loadState<Record<string, BuilderComponent[]>>("b2bapp:builders", {})[activeClient.id];
