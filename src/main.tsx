@@ -118,7 +118,7 @@ function App() {
   useEffect(() => saveState("b2bapp:customers", customers), [customers]);
   useEffect(() => saveState("b2bapp:orders", orders), [orders]);
   useEffect(() => { fetch("/api/auth/me", { credentials: "include" }).then(async (response) => { if (!response.ok) return null; return response.json(); }).then((data) => { if (data?.clientId) { setOwnerSession(data.clientId); setShopOwnerMode(true); setView("shop"); } }).catch(() => {}); }, []);
-  const [clientSearch, setClientSearch] = useState("");
+  useEffect(() => {\n    if (!ownerSession) return;\n    fetch("/api/owner/data", { credentials: "include" })\n      .then(async (response) => response.ok ? response.json() : null)\n      .then((data) => {\n        if (!data || data.clientId !== ownerSession) return;\n        setProducts(data.products ?? []);\n        setCustomers(data.customers ?? []);\n        setOrders(data.orders ?? []);\n      })\n      .catch(() => {});\n  }, [ownerSession]);\n  const [clientSearch, setClientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
@@ -296,24 +296,48 @@ function App() {
   }
 
   function createClient() { const name=newClientName.trim(); const email=newOwnerEmail.trim().toLowerCase(); const password=newOwnerPassword; if(!name || !email || password.length<8) return; const newSlug=name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); if(clients.some(x=>x.slug===newSlug || x.ownerEmail?.toLowerCase()===email)) return; const nextNumber=clients.reduce((max,c)=>Math.max(max,Number(c.id.replace("YA-",""))||100),100)+1; const item:Client={id:`YA-${nextNumber}`,name,slug:newSlug,limit:Math.max(1,Number(newClientLimit)||1000),status:"Active",builder:true,products:0,customers:0,ownerEmail:email,ownerPassword:password}; setClients(x=>[...x,item]); setClient(name); setShowClientForm(false); setNewClientName(""); setNewOwnerEmail(""); setNewOwnerPassword("ChangeMe@123"); setView("shop"); }
-  function saveProduct() {
+  async function saveProduct() {
     const name=newProductName.trim();
     if(!name || !activeClient) return;
     const stock=Number(newProductStock);
     if(!Number.isFinite(stock) || stock<0) return;
-    if(editingProduct){
-      setProducts(x=>x.map(p=>p.id===editingProduct.id?{...p,name,price:newProductPrice.trim()||"₹0",stock}:p));
-    } else {
-      setProducts(x=>[...x,{id:`P-${Date.now()}`,name,sku:`SKU-${Date.now().toString().slice(-6)}`,category:"General",price:newProductPrice.trim()||"₹0",stock,status:"Active",clientId:activeClient.id}]);
-    }    setNewProductName(""); setNewProductPrice(""); setNewProductStock("0"); setEditingProduct(null); setShowProductForm(false);
+    const payload={name,price:newProductPrice.trim()||"₹0",stock};
+    if(ownerSession){
+      try{
+        if(editingProduct){
+          const response=await fetch(`/api/owner/products/${editingProduct.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
+          if(!response.ok) throw new Error("Product update failed");
+          const updated=await response.json();
+          setProducts(x=>x.map(p=>p.id===updated.id?updated:p));
+        }else{
+          const response=await fetch("/api/owner/products",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
+          if(!response.ok) throw new Error("Product create failed");
+          const created=await response.json();
+          setProducts(x=>[created,...x]);
+        }
+      }catch{
+        return;
+      }
+    }else if(editingProduct){
+      setProducts(x=>x.map(p=>p.id===editingProduct.id?{...p,name,price:payload.price,stock}:p));
+    }else{
+      setProducts(x=>[...x,{id:`P-${Date.now()}`,name,sku:`SKU-${Date.now().toString().slice(-6)}`,category:"General",price:payload.price,stock,status:"Active",clientId:activeClient.id}]);
+    }
+    setNewProductName(""); setNewProductPrice(""); setNewProductStock("0"); setEditingProduct(null); setShowProductForm(false);
   }
 
   function openProductEdit(product:Product){
     setEditingProduct(product); setNewProductName(product.name); setNewProductPrice(product.price); setNewProductStock(String(product.stock)); setShowProductForm(true);
   }
 
-  function deleteProduct(id:string){
+  async function deleteProduct(id:string){
     if(!window.confirm("Delete this product?")) return;
+    if(ownerSession){
+      try{
+        const response=await fetch(`/api/owner/products/${id}`,{method:"DELETE",credentials:"include"});
+        if(!response.ok) throw new Error("Delete failed");
+      }catch{return;}
+    }
     setProducts(x=>x.filter(p=>p.id!==id));
   }
 
