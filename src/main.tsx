@@ -1,4 +1,4 @@
-import { StrictMode, useMemo, useState } from "react";
+import { StrictMode, useMemo, useState } from "react";\nimport type { DragEvent } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
