@@ -205,7 +205,7 @@ function App() {
           {view==="clients" && <ClientsView clients={filteredClients} search={clientSearch} setSearch={setClientSearch} onAdd={()=>setShowClientForm(true)} onToggle={toggleClientStatus} onOpen={(name)=>{setClient(name);setView("shop")}}/>}
           {view==="shop" && <ShopDashboard client={activeClient} products={products} setView={setView} onAddProduct={()=>setShowProductForm(true)}/>} 
           {view==="products" && <ProductsView products={filteredProducts} search={productSearch} setSearch={setProductSearch} onAdd={()=>setShowProductForm(true)}/>} 
-          {view==="customers" && <CustomersView client={activeClient} customers={clientCustomers}/>}\n          {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders}/>}\n          {view==="store" && <CustomerStorefront client={activeClient} products={clientProducts} customers={clientCustomers} setCustomers={setCustomers} setOrders={setOrders}/>} 
+          {view==="customers" && <CustomersView client={activeClient} customers={clientCustomers}/>}\n          {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders}/>}\n          {view==="store" && <CustomerStorefront client={activeClient} products={clientProducts} customers={clientCustomers} setCustomers={setCustomers} setClients={setClients} setOrders={setOrders}/>} 
           {view==="builder" && <>
           <section className="clientbar">
             <label className="client-select">Client
@@ -326,12 +326,13 @@ function ClientsView({clients,search,setSearch,onAdd,onToggle,onOpen}:{clients:C
 function ShopDashboard({client,products,setView,onAddProduct}:{client:Client;products:Product[];setView:(v:AppView)=>void;onAddProduct:()=>void}){return <section className="page-view"><div className="page-title"><div><span className="eyebrow">SHOP DASHBOARD</span><h1>{client.name}</h1><p>Manage this shop's catalog and customer-facing B2B app.</p></div><div className="title-actions"><button className="ghost-dark" onClick={()=>setView("builder")}>✣ App Builder</button><button className="primary" onClick={onAddProduct}>＋ Add Product</button></div></div><div className="shop-identity"><div className="shop-logo">{client.name.slice(0,1)}</div><div><b>https://{client.slug}.b2bapp.in</b><span>Customer limit: {client.limit.toLocaleString("en-IN")} • {client.status}</span></div><button className="copy-btn">⧉ Copy Link</button></div><div className="stats-grid"><Stat label="Products" value={products.length} note="Catalog items"/><Stat label="Customers" value={client.customers} note={`${client.limit-client.customers} slots available`}/><Stat label="Orders" value="0" note="Ready for order module"/><Stat label="App Status" value={client.status} note="Customer app"/></div><div className="dashboard-grid"><div className="card"><div className="card-head"><div><h3>Catalog</h3><p>Products currently available to the shop.</p></div><button className="text-button" onClick={()=>setView("products")}>Manage Products →</button></div><div className="mini-products">{products.slice(0,4).map(p=><div className="mini-product" key={p.id}><div className="product-thumb">◇</div><div><b>{p.name}</b><span>{p.sku} • {p.category}</span></div><strong>{p.price}</strong></div>)}</div></div><div className="card customer-card"><div className="card-head"><div><h3>Customer App</h3><p>What your customers will open.</p></div></div><div className="customer-link">↗ <b>{client.slug}.b2bapp.in</b></div><div className="app-features"><span>✓ Branded shop</span><span>✓ Product catalog</span><span>✓ WhatsApp sharing</span><span>✓ Mobile-first</span></div><div className="store-actions"><button className="outline-full" onClick={()=>setView("builder")}>Customize Customer App</button><button className="primary-full" onClick={()=>setView("store")}>Open Customer App</button></div></div></div></section>}
 function ProductsView({products,search,setSearch,onAdd}:{products:Product[];search:string;setSearch:(v:string)=>void;onAdd:()=>void}){return <section className="page-view"><div className="page-title"><div><span className="eyebrow">PRODUCT MANAGEMENT</span><h1>Products</h1><p>Add and maintain the shop catalog used by the customer app.</p></div><button className="primary" onClick={onAdd}>＋ Add Product</button></div><div className="toolbar"><div className="search-wide">⌕<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search product or SKU..."/></div><span>{products.length} products</span></div><div className="card table-card"><table><thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>PRICE</th><th>STOCK</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>{products.map(p=><tr key={p.id}><td><div className="table-client"><div className="product-thumb small">◇</div><span><b>{p.name}</b><small>{p.sku}</small></span></div></td><td>{p.category}</td><td><b>{p.price}</b></td><td><span className={p.stock===0?"stock zero":"stock"}>{p.stock}</span></td><td><span className={p.status==="Active"?"tag":"tag muted"}>{p.status}</span></td><td><button className="small-action">Edit</button></td></tr>)}</tbody></table></div></section>}
 function CustomersView({client,customers}:{client:Client;customers:Customer[]}){const available=Math.max(0,client.limit-client.customers);return <section className="page-view"><div className="page-title"><div><span className="eyebrow">CUSTOMER MANAGEMENT</span><h1>{client.name} Customers</h1><p>Customer access is bounded by the Super Admin limit.</p></div><div className="limit-badge">Limit {client.limit.toLocaleString("en-IN")}</div></div><div className="stats-grid"><Stat label="Registered" value={client.customers} note="Active customer accounts"/><Stat label="Available Slots" value={available} note="Remaining capacity"/><Stat label="Usage" value={`${Math.round((client.customers/client.limit)*100)}%`} note="Customer limit usage"/><Stat label="Access" value={client.status} note="Shop status"/></div><div className="card table-card"><div className="customer-toolbar"><b>Customer Accounts</b><span>{customers.length} loaded</span></div><table><thead><tr><th>CUSTOMER</th><th>PHONE</th><th>ORDERS</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>{customers.map(c=><tr key={c.id}><td><div className="table-client"><div className="client-mark">{c.name.slice(0,1)}</div><span><b>{c.name}</b><small>{c.id}</small></span></div></td><td>{c.phone}</td><td>{c.orders}</td><td><span className={c.status==="Active"?"tag":"tag muted"}>{c.status}</span></td><td><button className="small-action">View</button></td></tr>)}</tbody></table></div></section>}
-function CustomerStorefront({client,products,customers,setCustomers,setOrders}:{client:Client;products:Product[];customers:Customer[];setCustomers:React.Dispatch<React.SetStateAction<Customer[]>>;setOrders:React.Dispatch<React.SetStateAction<Order[]>>}){
+function CustomerStorefront({client,products,customers,setCustomers,setClients,setOrders}:{client:Client;products:Product[];customers:Customer[];setCustomers:React.Dispatch<React.SetStateAction<Customer[]>>;setClients:React.Dispatch<React.SetStateAction<Client[]>>;setOrders:React.Dispatch<React.SetStateAction<Order[]>>}){
   const [category,setCategory]=useState("All");
   const [search,setSearch]=useState("");
   const [cart,setCart]=useState<Record<string,number>>({});
   const [cartOpen,setCartOpen]=useState(false);
   const [authMode,setAuthMode]=useState<"login"|"register"|null>(null);
+  const [checkoutOpen,setCheckoutOpen]=useState(false);
   const [customer,setCustomer]=useState<Customer|null>(null);
   const [authName,setAuthName]=useState("");
   const [authPhone,setAuthPhone]=useState("");
@@ -348,8 +349,8 @@ function CustomerStorefront({client,products,customers,setCustomers,setOrders}:{
   function openCheckout(){
     if(count===0) return;
     setAuthError("");
-    if(customer){ setAuthMode(null); return; }
-    setAuthMode("login");
+    if(customer){ setCartOpen(false); setCheckoutOpen(true); return; }
+    setCartOpen(false); setAuthMode("login");
   }
 
   function login(){
@@ -357,7 +358,7 @@ function CustomerStorefront({client,products,customers,setCustomers,setOrders}:{
     if(phone.length<8){setAuthError("Enter a valid mobile number.");return;}
     const found=customers.find(c=>c.phone.replace(/\\D/g,"")===phone.replace(/\\D/g,"")&&c.status==="Active");
     if(!found){setAuthError("Customer not found. Please register first.");return;}
-    setCustomer(found); setAuthMode(null); setAuthError(""); setAuthAddress(found.address||"");
+    setCustomer(found); setAuthMode(null); setAuthError(""); setAuthAddress(found.address||""); setCheckoutOpen(true);
   }
 
   function register(){
@@ -369,7 +370,7 @@ function CustomerStorefront({client,products,customers,setCustomers,setOrders}:{
     const registeredCount=customers.filter(c=>c.clientId===client.id).length;
     if(registeredCount>=client.limit){setAuthError("Customer registration limit has been reached for this shop.");return;}
     const next:Customer={id:`C-${Date.now()}`,name,phone,email:email||undefined,address,orders:0,status:"Active",clientId:client.id};
-    setCustomers(x=>[...x,next]); setCustomer(next); setAuthMode(null); setAuthError("");
+    setCustomers(x=>[...x,next]); setClients(x=>x.map(c=>c.id===client.id?{...c,customers:c.customers+1}:c)); setCustomer(next); setAuthMode(null); setAuthError(""); setCheckoutOpen(true);
   }
 
   function placeOrder(){
@@ -384,7 +385,7 @@ function CustomerStorefront({client,products,customers,setCustomers,setOrders}:{
     setOrders(x=>[order,...x]);
     setCustomers(x=>x.map(c=>c.id===customer.id?{...c,orders:c.orders+1,address}:c));
     setCustomer(x=>x?{...x,address}:x);
-    setCart({});setCartOpen(false);setOrdered(orderId);
+    setCart({});setCartOpen(false);setCheckoutOpen(false);setOrdered(orderId);
   }
 
   return <section className="storefront">
@@ -398,7 +399,7 @@ function CustomerStorefront({client,products,customers,setCustomers,setOrders}:{
     {cartOpen&&<div className="cart-sheet"><div className="cart-panel"><div className="cart-head"><div><span>YOUR ORDER</span><h2>Cart</h2></div><button onClick={()=>setCartOpen(false)}>×</button></div>{Object.entries(cart).filter(([,q])=>q>0).map(([id,q])=>{const p=products.find(x=>x.id===id);if(!p)return null;return <div className="cart-row" key={id}><div className="cart-thumb">◇</div><div className="cart-info"><b>{p.name}</b><small>{p.price} × {q}</small></div><div className="qty"><button onClick={()=>setCart(x=>({...x,[id]:Math.max(0,(x[id]||0)-1)}))}>−</button><b>{q}</b><button onClick={()=>setCart(x=>({...x,[id]:(x[id]||0)+1}))}>＋</button></div></div>})}{count===0&&<div className="empty-cart">Your cart is empty.</div>}<div className="cart-total"><span>Total</span><b>₹{total.toLocaleString("en-IN")}</b></div><button className="checkout" disabled={!count} onClick={openCheckout}>Place B2B Order →</button></div></div>}
     {authMode&&<div className="modal-backdrop" onClick={()=>{setAuthMode(null);setAuthError("")}}><div className="modal checkout-modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">CUSTOMER ACCOUNT</span><h2>{authMode==="login"?"Customer Login":"Customer Registration"}</h2></div><button onClick={()=>{setAuthMode(null);setAuthError("")}}>×</button></div><div className="auth-tabs"><button className={authMode==="login"?"active":""} onClick={()=>{setAuthMode("login");setAuthError("")}}>Login</button><button className={authMode==="register"?"active":""} onClick={()=>{setAuthMode("register");setAuthError("")}}>Register</button></div>{authMode==="login"?<><Field label="Mobile Number" value={authPhone} onChange={setAuthPhone}/><button className="primary-full" onClick={login}>Login & Continue</button></>:<><Field label="Business / Customer Name" value={authName} onChange={setAuthName}/><Field label="Mobile Number" value={authPhone} onChange={setAuthPhone}/><Field label="Email (Optional)" value={authEmail} onChange={setAuthEmail}/><Field label="Delivery Address" value={authAddress} onChange={setAuthAddress}/><button className="primary-full" onClick={register}>Register & Continue</button></>}{authError&&<div className="form-error">{authError}</div>}</div></div>}
     {customer&&cartOpen===false&&false}
-    {customer&&count>0&&<div className="modal-backdrop" onClick={()=>{}}><div className="modal checkout-modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">CHECKOUT</span><h2>Delivery Details</h2></div></div><Field label="Customer" value={customer.name} onChange={()=>{}}/><Field label="Mobile" value={customer.phone} onChange={()=>{}}/><Field label="Delivery Address" value={authAddress||customer.address||""} onChange={setAuthAddress}/><div className="checkout-total">Order Total <b>₹{total.toLocaleString("en-IN")}</b></div><button className="primary-full" onClick={placeOrder}>Confirm & Place B2B Order</button></div></div>}
+    {checkoutOpen&&customer&&count>0&&<div className="modal-backdrop" onClick={()=>setCheckoutOpen(false)}><div className="modal checkout-modal" onClick={e=>e.stopPropagation()}><div className="modal-head"><div><span className="eyebrow">CHECKOUT</span><h2>Delivery Details</h2></div><button onClick={()=>setCheckoutOpen(false)}>×</button></div><Field label="Customer" value={customer.name} onChange={()=>{}}/><Field label="Mobile" value={customer.phone} onChange={()=>{}}/><Field label="Delivery Address" value={authAddress||customer.address||""} onChange={setAuthAddress}/><div className="checkout-total">Order Total <b>₹{total.toLocaleString("en-IN")}</b></div><button className="primary-full" onClick={placeOrder}>Confirm & Place B2B Order</button></div></div>}
     {ordered&&<div className="order-success"><div>✓</div><h2>Order Placed</h2><p>Your order <b>{ordered}</b> has been submitted to {client.name}.</p><button onClick={()=>setOrdered(null)}>Continue Shopping</button></div>}
   </section>
 }
