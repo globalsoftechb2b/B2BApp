@@ -16,7 +16,7 @@ type BuilderComponent = {
 
 type Tab = "content" | "style" | "action" | "visibility";
 type AppView = "overview" | "clients" | "builder" | "shop" | "products" | "customers" | "store" | "orders";
-type Client = { id:string; name:string; slug:string; limit:number; status:"Active"|"Inactive"; builder:boolean; products:number; customers:number };
+type Client = { id:string; name:string; slug:string; limit:number; status:"Active"|"Inactive"; builder:boolean; products:number; customers:number; ownerEmail?:string; ownerPassword?:string };
 type Product = { id:string; name:string; sku:string; category:string; price:string; stock:number; status:"Active"|"Draft"; clientId?:string };
 type Customer={id:string;name:string;phone:string;email?:string;address?:string;orders:number;status:"Active"|"Blocked";clientId?:string};
 type OrderLine={productId:string;name:string;sku:string;qty:number;unitPrice:number;lineTotal:number};
@@ -55,7 +55,7 @@ const defaults: Record<ComponentType, Record<string, string>> = {
 
 const icon = (name: string) => <span className="ico">{name}</span>;
 
-const initialClients: Client[] = [{id:"YA-101",name:"ABC Traders",slug:"abc-traders",limit:1000,status:"Active",builder:true,products:124,customers:438},{id:"YA-102",name:"Global Fashion",slug:"global-fashion",limit:500,status:"Active",builder:true,products:86,customers:217},{id:"YA-103",name:"Shree Enterprises",slug:"shree-enterprises",limit:250,status:"Inactive",builder:false,products:42,customers:61}];
+const initialClients: Client[] = [{id:"YA-101",name:"ABC Traders",slug:"abc-traders",limit:1000,status:"Active",builder:true,products:124,customers:438,ownerEmail:"owner@abc-traders.b2bapp.in",ownerPassword:"ChangeMe@123"},{id:"YA-102",name:"Global Fashion",slug:"global-fashion",limit:500,status:"Active",builder:true,products:86,customers:217,ownerEmail:"owner@global-fashion.b2bapp.in",ownerPassword:"ChangeMe@123"},{id:"YA-103",name:"Shree Enterprises",slug:"shree-enterprises",limit:250,status:"Inactive",builder:false,products:42,customers:61,ownerEmail:"owner@shree-enterprises.b2bapp.in",ownerPassword:"ChangeMe@123"}];
 const initialProducts: Product[] = [{id:"P-1001",name:"Smart Watch",sku:"SW-001",category:"Electronics",price:"₹1,999",stock:84,status:"Active",clientId:"YA-101"},{id:"P-1002",name:"Sports Shoes",sku:"SS-204",category:"Footwear",price:"₹2,499",stock:42,status:"Active",clientId:"YA-101"},{id:"P-1003",name:"Cotton Shirt",sku:"CS-310",category:"Fashion",price:"₹899",stock:126,status:"Active",clientId:"YA-101"},{id:"P-1004",name:"Travel Bag",sku:"TB-118",category:"Bags",price:"₹1,299",stock:0,status:"Draft",clientId:"YA-101"}];
 
 const initialCustomers:Customer[]=[{id:"C-1001",name:"Rahul Traders",phone:"+91 98765 43210",email:"rahul@example.com",address:"Mumbai, Maharashtra",orders:18,status:"Active",clientId:"YA-101"},{id:"C-1002",name:"Sharma Stores",phone:"+91 98200 11223",email:"sharma@example.com",address:"Thane, Maharashtra",orders:11,status:"Active",clientId:"YA-101"},{id:"C-1003",name:"M K Enterprises",phone:"+91 97690 44556",email:"mk@example.com",address:"Kalyan, Maharashtra",orders:7,status:"Active",clientId:"YA-101"}];
@@ -97,8 +97,7 @@ function BuilderPreviewComponent({ item, products, client, onAction }: { item: B
   if (item.type === "category") return <div className="categories" style={style} {...actionProps}>{item.data.items.split("|").filter(Boolean).map(x=><div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>;
   if (item.type === "product") return <div className="product-grid" style={style} {...actionProps}>{visibleProducts.map((p)=><div className="product-card" key={p.id}><div className="product-image">◇</div><b>{p.name}</b><span>{p.price}</span><button disabled={p.stock===0}>Add</button></div>)}{visibleProducts.length===0&&<div className="empty">No active catalog products.</div>}</div>;
   if (item.type === "text") return <h2 className="mobile-heading" {...actionProps} style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
-  if (item.type === "image") return <div className="image-block" style={style} {...actionProps}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
-  if (item.type === "button") return <button className="mobile-cta" style={style} {...actionProps}>{item.data.label}</button>;
+  if (item.type === "image") return <div className="image-block" style={style} {...actionProps}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;  if (item.type === "button") return <button className="mobile-cta" style={style} {...actionProps}>{item.data.label}</button>;
   if (item.type === "search") return <BuilderPhotoSearch title={item.data.title} products={catalogProducts} style={style} />;  if (item.type === "whatsapp") return <BuilderProductShare title={item.data.label} products={catalogProducts} client={client} style={style} />;
   return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
 }
@@ -106,7 +105,11 @@ function App() {
   const [client, setClient] = useState("ABC Traders");
   const [view, setView] = useState<AppView>("builder");
   const [shopOwnerMode, setShopOwnerMode] = useState(false);
-  const [clients, setClients] = useState<Client[]>(() => loadState("b2bapp:clients", initialClients));
+  const [ownerSession, setOwnerSession] = useState<string | null>(() => loadState("b2bapp:ownerSession", null));
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPassword, setOwnerPassword] = useState("");
+  const [ownerError, setOwnerError] = useState("");
+  const [clients, setClients] = useState<Client[]>(() => loadState<Client[]>("b2bapp:clients", initialClients).map((c) => ({ ...c, ownerEmail: c.ownerEmail || `owner@${c.slug}.b2bapp.in`, ownerPassword: c.ownerPassword || "ChangeMe@123" })));
   const [products, setProducts] = useState<Product[]>(() => loadState("b2bapp:products", initialProducts));
   const [customers, setCustomers] = useState<Customer[]>(() => loadState("b2bapp:customers", initialCustomers));
   const [orders, setOrders] = useState<Order[]>(() => loadState("b2bapp:orders", initialOrders));
@@ -114,6 +117,7 @@ function App() {
   useEffect(() => saveState("b2bapp:products", products), [products]);
   useEffect(() => saveState("b2bapp:customers", customers), [customers]);
   useEffect(() => saveState("b2bapp:orders", orders), [orders]);
+  useEffect(() => saveState("b2bapp:ownerSession", ownerSession), [ownerSession]);
   const [clientSearch, setClientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
@@ -122,6 +126,8 @@ function App() {
   const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
   const [newClientName, setNewClientName] = useState("");
   const [newClientLimit, setNewClientLimit] = useState("1000");
+  const [newOwnerEmail, setNewOwnerEmail] = useState("");
+  const [newOwnerPassword, setNewOwnerPassword] = useState("ChangeMe@123");
   const [newProductName, setNewProductName] = useState("");
   const [newProductPrice, setNewProductPrice] = useState("");
   const [newProductStock, setNewProductStock] = useState("0");
@@ -161,6 +167,8 @@ function App() {
 
   const slug = client.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const activeClient = clients.find((item) => item.name === client) ?? clients[0];
+  const ownerClient = ownerSession ? clients.find((item) => item.id === ownerSession) : null;
+  if (shopOwnerMode && ownerSession && ownerClient && client !== ownerClient.name) setClient(ownerClient.name);
   useEffect(() => {
     if (!activeClient) return;
     const savedPages = pagesByClient[activeClient.id];
@@ -197,8 +205,7 @@ function App() {
       type,
       title: meta.label,
       data: { ...defaults[type] },
-    };
-    setComponents((items) => {
+    };    setComponents((items) => {
       const updated = [...items, next];
       if (activeClient) {
         setPagesByClient((current) => ({
@@ -287,7 +294,7 @@ function App() {
     if (type) addComponent(type);
   }
 
-  function createClient() { const name=newClientName.trim(); if(!name) return; const newSlug=name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); if(clients.some(x=>x.slug===newSlug)) return; const nextNumber=clients.reduce((max,c)=>Math.max(max,Number(c.id.replace("YA-",""))||100),100)+1; const item:Client={id:`YA-${nextNumber}`,name,slug:newSlug,limit:Math.max(1,Number(newClientLimit)||1000),status:"Active",builder:true,products:0,customers:0}; setClients(x=>[...x,item]); setClient(name); setShowClientForm(false); setNewClientName(""); setView("shop"); }
+  function createClient() { const name=newClientName.trim(); const email=newOwnerEmail.trim().toLowerCase(); const password=newOwnerPassword; if(!name || !email || password.length<8) return; const newSlug=name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""); if(clients.some(x=>x.slug===newSlug || x.ownerEmail?.toLowerCase()===email)) return; const nextNumber=clients.reduce((max,c)=>Math.max(max,Number(c.id.replace("YA-",""))||100),100)+1; const item:Client={id:`YA-${nextNumber}`,name,slug:newSlug,limit:Math.max(1,Number(newClientLimit)||1000),status:"Active",builder:true,products:0,customers:0,ownerEmail:email,ownerPassword:password}; setClients(x=>[...x,item]); setClient(name); setShowClientForm(false); setNewClientName(""); setNewOwnerEmail(""); setNewOwnerPassword("ChangeMe@123"); setView("shop"); }
   function saveProduct() {
     const name=newProductName.trim();
     if(!name || !activeClient) return;
@@ -297,8 +304,7 @@ function App() {
       setProducts(x=>x.map(p=>p.id===editingProduct.id?{...p,name,price:newProductPrice.trim()||"₹0",stock}:p));
     } else {
       setProducts(x=>[...x,{id:`P-${Date.now()}`,name,sku:`SKU-${Date.now().toString().slice(-6)}`,category:"General",price:newProductPrice.trim()||"₹0",stock,status:"Active",clientId:activeClient.id}]);
-    }
-    setNewProductName(""); setNewProductPrice(""); setNewProductStock("0"); setEditingProduct(null); setShowProductForm(false);
+    }    setNewProductName(""); setNewProductPrice(""); setNewProductStock("0"); setEditingProduct(null); setShowProductForm(false);
   }
 
   function openProductEdit(product:Product){
@@ -312,6 +318,31 @@ function App() {
 
   function createProduct() { saveProduct(); }
   function toggleClientStatus(id:string) { setClients(x=>x.map(c=>c.id===id?{...c,status:c.status==="Active"?"Inactive":"Active"}:c)); }
+
+  function openShopOwner() {
+    setShopOwnerMode(true);
+    setOwnerSession(null);
+    setOwnerEmail("");
+    setOwnerPassword("");
+    setOwnerError("");
+    setView("shop");
+  }
+
+  function loginShopOwner() {
+    if (!activeClient) return;
+    const email = ownerEmail.trim().toLowerCase();
+    const account = clients.find((item) => item.id === activeClient.id);
+    if (!account || account.status !== "Active") {
+      setOwnerError("This shop is inactive. Contact the Super Admin.");
+      return;
+    }
+    if (email !== account.ownerEmail?.toLowerCase() || ownerPassword !== account.ownerPassword) {
+      setOwnerError("Invalid shop owner email or password.");
+      return;
+    }
+    setOwnerSession(account.id);
+    setOwnerError("");
+  }
 
   function handleDragStart(event: DragEvent<HTMLButtonElement>, type: ComponentType) {
     event.dataTransfer.setData("component-type", type);
@@ -331,7 +362,7 @@ function App() {
           <span>▤ Subscriptions</span>
           <span>▥ Reports</span>
         </nav> : <div className="owner-top-title"><span>Shop Owner App</span><small>Manage your B2B business</small></div>}
-        <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { setShopOwnerMode(false); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
+        <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { setShopOwnerMode(false); setOwnerSession(null); setOwnerEmail(""); setOwnerPassword(""); setOwnerError(""); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
       </header>
 
       <div className={shopOwnerMode ? "workspace owner-workspace" : "workspace"}>
@@ -348,7 +379,7 @@ function App() {
         <main className="main">
           {view==="overview" && <Overview clients={clients} setView={setView}/>} 
           {view==="clients" && <ClientsView clients={filteredClients} search={clientSearch} setSearch={setClientSearch} onAdd={()=>setShowClientForm(true)} onToggle={toggleClientStatus} onOpen={(name)=>{setClient(name);setView("shop")}}/>}
-          {view==="shop" && <ShopDashboard client={activeClient} products={clientProducts} orders={clientOrders} setView={setView} onAddProduct={()=>setShowProductForm(true)} onOpenOwner={()=>{setShopOwnerMode(true);setView("shop")}}/>}
+          {view==="shop" && <ShopDashboard client={activeClient} products={clientProducts} orders={clientOrders} setView={setView} onAddProduct={()=>setShowProductForm(true)} onOpenOwner={openShopOwner}/>}
           {view==="products" && <ProductsView products={filteredProducts} search={productSearch} setSearch={setProductSearch} onAdd={()=>{setEditingProduct(null);setNewProductName("");setNewProductPrice("");setNewProductStock("0");setShowProductForm(true)}} onEdit={openProductEdit} onDelete={deleteProduct}/>} 
           {view==="customers" && <CustomersView client={activeClient} customers={clientCustomers} orders={clientOrders} setCustomers={setCustomers}/>}
           {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders} setProducts={setProducts}/>}
@@ -397,8 +428,7 @@ function App() {
                     <div key={item.id} className={item.id === selectedId ? "canvas-item selected-canvas" : "canvas-item"} onClick={() => setSelectedId(item.id)}>
                       {item.type === "category" && <div className="categories">{item.data.items.split("|").filter(Boolean).map((x) => <div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>}
                       {item.type === "banner" && <div className="banner"><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>}
-                      {item.type === "text" && <h2 className="mobile-heading">{item.title}</h2>}
-                      {item.type === "product" && <div><div className="section-head"><b>{item.title}</b><span>View All →</span></div><div className="products">{item.data.items.split("|").filter(Boolean).map((x, i) => <div className="product" key={x}><div className="product-img">◇</div><b>{item.data.prices.split("|")[i] ?? "₹999"}</b><span>{x}</span></div>)}</div></div>}
+                      {item.type === "text" && <h2 className="mobile-heading">{item.title}</h2>}                      {item.type === "product" && <div><div className="section-head"><b>{item.title}</b><span>View All →</span></div><div className="products">{item.data.items.split("|").filter(Boolean).map((x, i) => <div className="product" key={x}><div className="product-img">◇</div><b>{item.data.prices.split("|")[i] ?? "₹999"}</b><span>{x}</span></div>)}</div></div>}
                       {item.type === "image" && <div className="image-block">{item.data.url ? <img src={item.data.url} alt="" /> : "Image placeholder"}</div>}
                       {item.type === "button" && <button className="wide-button">{item.data.label}</button>}
                       {item.type === "search" && <div className="feature-card"><div className="feature-icon">⌾</div><div><b>{item.data.title}</b><span>Search products using camera</span></div><span>›</span></div>}
@@ -455,7 +485,7 @@ function App() {
       </div>
 
       {showPageForm && <Modal title="Add Builder Page" onClose={()=>setShowPageForm(false)}><Field label="Page Name" value={newPageName} onChange={setNewPageName}/><button className="primary-full" onClick={createBuilderPage}>Create Page</button></Modal>}
-      {showClientForm && <Modal title="Create New Shop Client" onClose={()=>setShowClientForm(false)}><Field label="Shop Name" value={newClientName} onChange={setNewClientName}/><Field label="Customer Limit" value={newClientLimit} onChange={setNewClientLimit}/><button className="primary-full" onClick={createClient}>Create Client & Open Dashboard</button></Modal>}
+      {showClientForm && <Modal title="Create New Shop Client" onClose={()=>setShowClientForm(false)}><Field label="Shop Name" value={newClientName} onChange={setNewClientName}/><Field label="Owner Email" value={newOwnerEmail} onChange={setNewOwnerEmail}/><Field label="Owner Password (min 8 characters)" value={newOwnerPassword} onChange={setNewOwnerPassword}/><Field label="Customer Limit" value={newClientLimit} onChange={setNewClientLimit}/><button className="primary-full" onClick={createClient}>Create Client & Open Dashboard</button></Modal>}
       {showProductForm && <Modal title="Add Product" onClose={()=>setShowProductForm(false)}><Field label="Product Name" value={newProductName} onChange={setNewProductName}/><Field label="Selling Price" value={newProductPrice} onChange={setNewProductPrice}/><Field label="Opening Stock" value={newProductStock} onChange={setNewProductStock}/><button className="primary-full" onClick={createProduct}>Save Product</button></Modal>}
 
       {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false" && (activePage !== "Home" || x.data.homeVisible !== "false") && (x.data.loginOnly !== "true" || previewLoggedIn)).map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} client={activeClient} onAction={(target) => {
@@ -497,8 +527,7 @@ function CustomerStorefront({client,products,customers,setCustomers,setClients,s
   const [authMode,setAuthMode]=useState<"login"|"register"|null>(null);
   const [checkoutOpen,setCheckoutOpen]=useState(false);
   const [customer,setCustomer]=useState<Customer|null>(null);
-  const [authName,setAuthName]=useState("");
-  const [authPhone,setAuthPhone]=useState("");
+  const [authName,setAuthName]=useState("");  const [authPhone,setAuthPhone]=useState("");
   const [authEmail,setAuthEmail]=useState("");
   const [authAddress,setAuthAddress]=useState("");
   const [authError,setAuthError]=useState("");
@@ -621,4 +650,3 @@ function BuilderPhotoSearch({ title, products, style }: { title:string; products
     <span>›</span>
   </div>;
 }
-
