@@ -242,7 +242,17 @@ function App() {
       ...current,
       [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: components },
     }));
-    const next = pagesByClient[activeClient.id]?.[page] ?? [];
+    const next = pagesByClient[activeClient.id]?.[page] ?? (
+      page === "Category"
+        ? components.filter((x) => x.type === "category" || x.type === "product")
+        : page === "Photo Search"
+          ? [{ id: `search-${Date.now()}`, type: "search" as ComponentType, title: "Find Products by Photo", data: { title: "Find Products by Photo" } }]
+          : page === "Share Product"
+            ? [
+                { id: `share-product-${Date.now()}`, type: "product" as ComponentType, title: "Featured Products", data: { source: "catalog", items: "", prices: "" } },
+                { id: `share-whatsapp-${Date.now() + 1}`, type: "whatsapp" as ComponentType, title: "Share Product", data: { label: "Share on WhatsApp" } },
+              ]
+            : []);
     setActivePage(page);
     setComponents(next);
     setSelectedId(next[0]?.id ?? "");
@@ -375,7 +385,7 @@ function App() {
                 <div className="phone-top"><span>☰</span><b>{client}</b><span>⌕ 🛒</span></div>
                 <div className="phone-body" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
                   <div className="app-strip"><span>Welcome to {client}</span><b>●</b></div>
-                  {components.filter((item) => item.data.homeVisible !== "false").map((item) => (
+                  {components.map((item) => (
                     <div key={item.id} className={item.id === selectedId ? "canvas-item selected-canvas" : "canvas-item"} onClick={() => setSelectedId(item.id)}>
                       {item.type === "category" && <div className="categories">{item.data.items.split("|").filter(Boolean).map((x) => <div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>}
                       {item.type === "banner" && <div className="banner"><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>}
@@ -423,7 +433,7 @@ function App() {
 
           <section className="pagebar">
             <b>Page Management</b>
-            {(Object.keys(pagesByClient[activeClient?.id ?? ""] ?? { Home: [], Category: [], "Photo Search": [], "Share Product": [] })).map((page, i) => <button key={page} className={activePage === page ? "page active" : "page"} onClick={() => switchPage(page)}>{page} <small>Page {i + 1}</small></button>)}
+            {Array.from(new Set(["Home", "Category", "Photo Search", "Share Product", ...Object.keys(pagesByClient[activeClient?.id ?? ""] ?? {})])).map((page, i) => <button key={page} className={activePage === page ? "page active" : "page"} onClick={() => switchPage(page)}>{page} <small>Page {i + 1}</small></button>)}
             <button className="page add" onClick={() => { setNewPageName(""); setShowPageForm(true); }}>＋ Add Page</button>
           </section>
           </>}
@@ -434,7 +444,7 @@ function App() {
       {showClientForm && <Modal title="Create New Shop Client" onClose={()=>setShowClientForm(false)}><Field label="Shop Name" value={newClientName} onChange={setNewClientName}/><Field label="Customer Limit" value={newClientLimit} onChange={setNewClientLimit}/><button className="primary-full" onClick={createClient}>Create Client & Open Dashboard</button></Modal>}
       {showProductForm && <Modal title="Add Product" onClose={()=>setShowProductForm(false)}><Field label="Product Name" value={newProductName} onChange={setNewProductName}/><Field label="Selling Price" value={newProductPrice} onChange={setNewProductPrice}/><Field label="Opening Stock" value={newProductStock} onChange={setNewProductStock}/><button className="primary-full" onClick={createProduct}>Save Product</button></Modal>}
 
-      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false" && x.data.homeVisible !== "false").map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} onAction={(target) => {
+      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false").map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} onAction={(target) => {
                 const action = target.data.action || "None";
                 if (action === "Open External Link" && target.data.target) window.open(target.data.target, "_blank");
                 else if (action === "Open WhatsApp") window.open("https://wa.me/?text=" + encodeURIComponent(target.title + " — " + window.location.origin + "/?shop=" + activeClient.slug), "_blank");
