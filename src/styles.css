@@ -108,3 +108,18 @@
   .owner-workspace .shop-identity{padding:13px}
   .owner-workspace .shop-identity .copy-btn{display:none}
 }
+
+@media(max-width:900px){
+  .owner-workspace .table-card table{display:block}
+  .owner-workspace .table-card thead{display:none}
+  .owner-workspace .table-card tbody,.owner-workspace .table-card tr{display:block;width:100%}
+  .owner-workspace .table-card tr{padding:12px 0;border-bottom:1px solid #edf0f5}
+  .owner-workspace .table-card tr:last-child{border-bottom:0}
+  .owner-workspace .table-card td{display:block;border:0;padding:3px 12px;text-align:left}
+  .owner-workspace .table-card td:first-child{padding-top:4px}
+  .owner-workspace .table-card td::before{content:"";display:none}
+  .owner-workspace .table-card .row-actions{margin-top:8px}
+  .owner-workspace .table-card .small-action{padding:8px 12px}
+  .owner-workspace .search-wide{width:100%}
+  .owner-workspace .toolbar{display:flex;flex-direction:column;align-items:stretch;gap:8px}
+}
