@@ -79,8 +79,8 @@ function BuilderPreviewComponent({ item }: { item: BuilderComponent }) {
   if (item.type === "text") return <h2 className="mobile-heading" style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
   if (item.type === "image") return <div className="image-block" style={style}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
   if (item.type === "button") return <button className="mobile-cta" style={style}>{item.data.label}</button>;
-  if (item.type === "search") return <div className="feature-card" style={style}><div className="feature-icon">⌾</div><div><b>{item.data.title}</b><span>Find products by photo</span></div><span>›</span></div>;
-  if (item.type === "whatsapp") return <button className="whatsapp-button" style={style}>◉ {item.data.label}</button>;
+  if (item.type === "search") return <div className="feature-card" style={style}><div className="feature-icon">⌾</div><div><b>{item.data.title}</b><span>Camera / photo search</span><small>Match products from the catalog</small></div><span>›</span></div>;
+  if (item.type === "whatsapp") return <button className="whatsapp-button" style={style} onClick={() => window.open("https://wa.me/?text=" + encodeURIComponent(item.data.label + " — " + window.location.origin), "_blank")}>◉ {item.data.label}</button>;
   return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
 }
 
