@@ -139,6 +139,7 @@ function App() {
   const [tab, setTab] = useState<Tab>("content");
   const [published, setPublished] = useState(false);
   const [showBuilderPreview, setShowBuilderPreview] = useState(false);
+  const [previewLoggedIn, setPreviewLoggedIn] = useState(false);
   const [showPageForm, setShowPageForm] = useState(false);
   const [newPageName, setNewPageName] = useState("");
   const [search, setSearch] = useState("");
@@ -444,14 +445,14 @@ function App() {
       {showClientForm && <Modal title="Create New Shop Client" onClose={()=>setShowClientForm(false)}><Field label="Shop Name" value={newClientName} onChange={setNewClientName}/><Field label="Customer Limit" value={newClientLimit} onChange={setNewClientLimit}/><button className="primary-full" onClick={createClient}>Create Client & Open Dashboard</button></Modal>}
       {showProductForm && <Modal title="Add Product" onClose={()=>setShowProductForm(false)}><Field label="Product Name" value={newProductName} onChange={setNewProductName}/><Field label="Selling Price" value={newProductPrice} onChange={setNewProductPrice}/><Field label="Opening Stock" value={newProductStock} onChange={setNewProductStock}/><button className="primary-full" onClick={createProduct}>Save Product</button></Modal>}
 
-      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false").map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} onAction={(target) => {
+      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false" && (activePage !== "Home" || x.data.homeVisible !== "false") && (x.data.loginOnly !== "true" || previewLoggedIn)).map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} onAction={(target) => {
                 const action = target.data.action || "None";
                 if (action === "Open External Link" && target.data.target) window.open(target.data.target, "_blank");
                 else if (action === "Open WhatsApp") window.open("https://wa.me/?text=" + encodeURIComponent(target.title + " — " + window.location.origin + "/?shop=" + activeClient.slug), "_blank");
                 else if (action === "Open Products") setView("store");
                 else if (action === "Open Category") setView("store");
                 else if (action === "Open Product") setView("store");
-              }} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
+              }} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><label className="toggle-row"><input type="checkbox" checked={previewLoggedIn} onChange={(e) => setPreviewLoggedIn(e.target.checked)} /> Simulate logged-in customer</label><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
     </div>
   );
 }
