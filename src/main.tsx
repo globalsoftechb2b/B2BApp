@@ -76,13 +76,6 @@ function App() {
   useEffect(() => saveState("b2bapp:customers", customers), [customers]);
   useEffect(() => saveState("b2bapp:orders", orders), [orders]);
   useEffect(() => saveState("b2bapp:builders", builderByClient), [builderByClient]);
-  useEffect(() => {
-    if (!activeClient) return;
-    setBuilderByClient((current) => {
-      if (current[activeClient.id] === components) return current;
-      return { ...current, [activeClient.id]: components };
-    });
-  }, [activeClient?.id, components]);
   const [clientSearch, setClientSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
