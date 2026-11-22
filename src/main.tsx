@@ -96,6 +96,7 @@ function App() {
   const [selectedId, setSelectedId] = useState("banner-1");
   const [tab, setTab] = useState<Tab>("content");
   const [published, setPublished] = useState(false);
+  const [showBuilderPreview, setShowBuilderPreview] = useState(false);
   const [activePage, setActivePage] = useState("Home");
   const [search, setSearch] = useState("");
 
@@ -258,7 +259,7 @@ function App() {
               <button title="Open">↗</button>
             </div>
             <span className="status">● Active</span>
-            <button className="ghost">◉ Preview</button>
+            <button className="ghost" onClick={() => setShowBuilderPreview(true)}>◉ Preview</button>
             <button className="publish" onClick={publishCurrentApp}>⇧ Publish</button>
           </section>
 
@@ -322,9 +323,9 @@ function App() {
                     {selected.type === "whatsapp" && <Field label="Share Text" value={selected.data.label} onChange={(v) => updateSelected("label", v)} />}
                     {selected.type === "video" && <Field label="Video Title" value={selected.data.title} onChange={(v) => updateSelected("title", v)} />}
                   </>}
-                  {tab === "style" && <><h4>Design Options</h4><Range label="Border Radius" min={0} max={30} /><Range label="Spacing" min={0} max={40} /><label className="field">Background<select><option>Gradient</option><option>Solid</option><option>Transparent</option></select></label><div className="two-col"><label className="field">Height<input type="number" defaultValue="220" /></label><label className="field">Padding<input type="number" defaultValue="16" /></label></div></>}
-                  {tab === "action" && <><h4>Action on Tap</h4><label className="field">Action<select><option>Open Products</option><option>Open Category</option><option>Open Product</option><option>Open WhatsApp</option><option>Open External Link</option></select></label><Field label="Link / Target" value="/products" onChange={() => {}} /></>}
-                  {tab === "visibility" && <><h4>Visibility Rules</h4><label className="toggle-row"><input type="checkbox" defaultChecked /> Visible on Home</label><label className="toggle-row"><input type="checkbox" defaultChecked /> Visible for Customers</label><label className="toggle-row"><input type="checkbox" /> Show only for logged-in customers</label></>}
+                  {tab === "style" && <><h4>Design Options</h4><RangeField label="Border Radius" value={selected.data.radius || "16"} min={0} max={30} onChange={(v) => updateSelected("radius", v)} /><RangeField label="Spacing" value={selected.data.spacing || "16"} min={0} max={40} onChange={(v) => updateSelected("spacing", v)} /><label className="field">Background<select value={selected.data.background || "Gradient"} onChange={(e) => updateSelected("background", e.target.value)}><option>Gradient</option><option>Solid</option><option>Transparent</option></select></label><div className="two-col"><label className="field">Height<input type="number" value={selected.data.height || "220"} onChange={(e) => updateSelected("height", e.target.value)} /></label><label className="field">Padding<input type="number" value={selected.data.padding || "16"} onChange={(e) => updateSelected("padding", e.target.value)} /></label></div></>}
+                  {tab === "action" && <><h4>Action on Tap</h4><label className="field">Action<select value={selected.data.action || "Open Products"} onChange={(e) => updateSelected("action", e.target.value)}><option>Open Products</option><option>Open Category</option><option>Open Product</option><option>Open WhatsApp</option><option>Open External Link</option><option>None</option></select></label><Field label="Link / Target" value={selected.data.target || "/products"} onChange={(v) => updateSelected("target", v)} /></>}
+                  {tab === "visibility" && <><h4>Visibility Rules</h4><label className="toggle-row"><input type="checkbox" checked={selected.data.homeVisible !== "false"} onChange={(e) => updateSelected("homeVisible", String(e.target.checked))} /> Visible on Home</label><label className="toggle-row"><input type="checkbox" checked={selected.data.customerVisible !== "false"} onChange={(e) => updateSelected("customerVisible", String(e.target.checked))} /> Visible for Customers</label><label className="toggle-row"><input type="checkbox" checked={selected.data.loginOnly === "true"} onChange={(e) => updateSelected("loginOnly", String(e.target.checked))} /> Show only for logged-in customers</label></>}
                 </div>
               )}
             </section>
@@ -342,7 +343,7 @@ function App() {
       {showClientForm && <Modal title="Create New Shop Client" onClose={()=>setShowClientForm(false)}><Field label="Shop Name" value={newClientName} onChange={setNewClientName}/><Field label="Customer Limit" value={newClientLimit} onChange={setNewClientLimit}/><button className="primary-full" onClick={createClient}>Create Client & Open Dashboard</button></Modal>}
       {showProductForm && <Modal title="Add Product" onClose={()=>setShowProductForm(false)}><Field label="Product Name" value={newProductName} onChange={setNewProductName}/><Field label="Selling Price" value={newProductPrice} onChange={setNewProductPrice}/><Field label="Opening Stock" value={newProductStock} onChange={setNewProductStock}/><button className="primary-full" onClick={createProduct}>Save Product</button></Modal>}
 
-      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app draft published successfully</div>}
+      {showBuilderPreview && activeClient && <Modal title={activeClient.name + " — Customer App Preview"} wide onClose={() => setShowBuilderPreview(false)}><div className="builder-preview-modal"><div className="phone preview-large"><div className="phone-top"><span>☰</span><b>{activeClient.name}</b><span>⌕ 🛒</span></div><div className="phone-body">{components.filter(x => x.data.customerVisible !== "false" && x.data.homeVisible !== "false").map(item => <BuilderPreviewComponent key={item.id} item={item} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
     </div>
   );
 }
