@@ -185,7 +185,8 @@ function App() {
       const owner = clients.find((item) => item.id === ownerSession);
       if (owner && client !== owner.name) setClient(owner.name);
     }
-  }, [shopOwnerMode, ownerSession, clients, client]);\n  useEffect(() => {
+  }, [shopOwnerMode, ownerSession, clients, client]);
+  useEffect(() => {
     if (!activeClient) return;
     const savedPages = pagesByClient[activeClient.id];
     const legacy = loadState<Record<string, BuilderComponent[]>>("b2bapp:builders", {})[activeClient.id];
