@@ -168,8 +168,7 @@ function App() {
   const slug = client.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   const activeClient = clients.find((item) => item.name === client) ?? clients[0];
   const ownerClient = ownerSession ? clients.find((item) => item.id === ownerSession) : null;
-  if (shopOwnerMode && ownerSession && ownerClient && client !== ownerClient.name) setClient(ownerClient.name);
-  useEffect(() => {
+  useEffect(() => {\n    if (shopOwnerMode && ownerSession) {\n      const owner = clients.find((item) => item.id === ownerSession);\n      if (owner && client !== owner.name) setClient(owner.name);\n    }\n  }, [shopOwnerMode, ownerSession, clients, client]);\n  useEffect(() => {
     if (!activeClient) return;
     const savedPages = pagesByClient[activeClient.id];
     const legacy = loadState<Record<string, BuilderComponent[]>>("b2bapp:builders", {})[activeClient.id];
@@ -185,8 +184,6 @@ function App() {
   const clientProducts = products.filter((item) => item.clientId === effectiveClientId);
   const clientCustomers = customers.filter((item) => item.clientId === effectiveClientId);
   const clientOrders = orders.filter((item) => item.clientId === effectiveClientId);
-  const clientCustomers = customers.filter((item) => item.clientId === activeClient?.id);
-  const clientOrders = orders.filter((item) => item.clientId === activeClient?.id);
   const filteredProducts = clientProducts.filter((item) => item.name.toLowerCase().includes(productSearch.toLowerCase()) || item.sku.toLowerCase().includes(productSearch.toLowerCase()));
 
   function publishCurrentApp() {
