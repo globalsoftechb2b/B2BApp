@@ -37,13 +37,13 @@ const initialComponents: BuilderComponent[] = [
   { id: "cat-1", type: "category", title: "Shop by Category", data: { items: "Men Fashion|Women Fashion|Home & Living|More" } },
   { id: "banner-1", type: "banner", title: "New Arrival", data: { subtitle: "Latest Collection Now in Stock", button: "Shop Now" } },
   { id: "text-1", type: "text", title: "New Arrival", data: { align: "left" } },
-  { id: "products-1", type: "product", title: "Featured Products", data: { items: "Smart Watch|Sports Shoes", prices: "₹1,999|₹2,499" } },
+  { id: "products-1", type: "product", title: "Featured Products", data: { source: "catalog", items: "Smart Watch|Sports Shoes", prices: "₹1,999|₹2,499" } },
 ];
 
 const defaults: Record<ComponentType, Record<string, string>> = {
   banner: { subtitle: "Fresh collection for your customers", button: "Shop Now" },
   category: { items: "Category 1|Category 2|Category 3|More" },
-  product: { items: "Product One|Product Two", prices: "₹999|₹1,499" },
+  product: { source: "catalog", items: "Product One|Product Two", prices: "₹999|₹1,499" },
   text: { align: "left" },
   image: { url: "" },
   button: { label: "View Products" },
@@ -69,21 +69,64 @@ function RangeField({ label, value, min, max, onChange }: { label:string; value:
   return <label className="field">{label}<input type="range" min={min} max={max} value={Number(value)} onChange={(e)=>onChange(e.target.value)} /><small>{value}px</small></label>;
 }
 
-function BuilderPreviewComponent({ item }: { item: BuilderComponent }) {
+function BuilderPreviewComponent({ item, products }: { item: BuilderComponent; products: Product[] }) {
   const radius = Number(item.data.radius || 16);
   const spacing = Number(item.data.spacing || 16);
-  const style = { borderRadius: radius, marginBottom: spacing };
+  const style = {
+    borderRadius: radius,
+    marginBottom: spacing,
+    background: item.data.background === "Solid" ? "#fff" : undefined,
+    padding: item.data.padding ? Number(item.data.padding) : undefined,
+  };
+  const catalogProducts = products.filter((p) => p.status === "Active");
+  const manualProducts = item.data.items?.split("|").filter(Boolean).map((name, i) => ({
+    id: `manual-${i}`,
+    name,
+    sku: "",
+    category: "Catalog",
+    price: item.data.prices?.split("|")[i] || "₹0",
+    stock: 99,
+    status: "Active" as const,
+  })) || [];
+  const visibleProducts = item.data.source === "catalog" ? catalogProducts : manualProducts;
+
   if (item.type === "banner") return <div className="banner" style={style}><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>;
   if (item.type === "category") return <div className="categories" style={style}>{item.data.items.split("|").filter(Boolean).map(x=><div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>;
-  if (item.type === "product") return <div className="product-grid" style={style}>{item.data.items.split("|").filter(Boolean).map((x,i)=><div className="product-card" key={x}><div className="product-image">◇</div><b>{x}</b><span>{(item.data.prices||"").split("|")[i] || "₹0"}</span><button>Add</button></div>)}</div>;
+  if (item.type === "product") return <div className="product-grid" style={style}>{visibleProducts.map((p)=><div className="product-card" key={p.id}><div className="product-image">◇</div><b>{p.name}</b><span>{p.price}</span><button disabled={p.stock===0}>Add</button></div>)}{visibleProducts.length===0&&<div className="empty">No active catalog products.</div>}</div>;
   if (item.type === "text") return <h2 className="mobile-heading" style={{...style,textAlign:(item.data.align as "left"|"center"|"right") || "left"}}>{item.title}</h2>;
   if (item.type === "image") return <div className="image-block" style={style}>{item.data.url ? <img src={item.data.url} alt={item.title}/> : <div className="image-placeholder">Image</div>}</div>;
   if (item.type === "button") return <button className="mobile-cta" style={style}>{item.data.label}</button>;
-  if (item.type === "search") return <div className="feature-card" style={style}><div className="feature-icon">⌾</div><div><b>{item.data.title}</b><span>Camera / photo search</span><small>Match products from the catalog</small></div><span>›</span></div>;
-  if (item.type === "whatsapp") return <button className="whatsapp-button" style={style} onClick={() => window.open("https://wa.me/?text=" + encodeURIComponent(item.data.label + " — " + window.location.origin), "_blank")}>◉ {item.data.label}</button>;
+  if (item.type === "search") {
+    const [query, setQuery] = useState("");
+    const [matched, setMatched] = useState<Product[]>([]);
+    function findProducts(value:string) {
+      setQuery(value);
+      const normalized=value.toLowerCase().trim();
+      if (!normalized) { setMatched([]); return; }
+      const result=catalogProducts.filter(p => `${p.name} ${p.sku} ${p.category}`.toLowerCase().includes(normalized));
+      setMatched(result);
+    }
+    return <div className="feature-card" style={style}>
+      <div className="feature-icon">⌾</div>
+      <div style={{flex:1}}>
+        <b>{item.data.title}</b>
+        <span>Search catalog by photo or keyword</span>
+        <input type="file" accept="image/*" onChange={(e)=>{const file=e.target.files?.[0]; if(file) findProducts(file.name.replace(/\\.[^.]+$/,"").replace(/[-_]/g," "));}} />
+        <input value={query} onChange={(e)=>findProducts(e.target.value)} placeholder="Try product name / SKU..." />
+        {matched.length>0&&<div className="search-results">{matched.slice(0,4).map(p=><div key={p.id}><b>{p.name}</b><span>{p.price} • Similar products: {catalogProducts.filter(x=>x.category===p.category).length}</span></div>)}</div>}
+      </div>
+      <span>›</span>
+    </div>;
+  }
+  if (item.type === "whatsapp") {
+    const shareProduct = catalogProducts[0];
+    const shareText = shareProduct
+      ? `${shareProduct.name} — ${shareProduct.price} — SKU ${shareProduct.sku}\\n${window.location.origin}`
+      : item.data.label + " — " + window.location.origin;
+    return <button className="whatsapp-button" style={style} onClick={() => window.open("https://wa.me/?text=" + encodeURIComponent(shareText), "_blank")}>◉ {item.data.label}{shareProduct ? ` • ${shareProduct.name}` : ""}</button>;
+  }
   return <div className="video-block" style={style}>▶ <span>{item.data.title}</span></div>;
 }
-
 function App() {
   const [client, setClient] = useState("ABC Traders");
   const [view, setView] = useState<AppView>("builder");
@@ -347,7 +390,7 @@ function App() {
                     <Field label="Title" value={selected.title} onChange={(v) => updateSelected("title", v)} />
                     {selected.type === "banner" && <><Field label="Sub Text" value={selected.data.subtitle} onChange={(v) => updateSelected("subtitle", v)} /><Field label="Button Text" value={selected.data.button} onChange={(v) => updateSelected("button", v)} /></>}
                     {selected.type === "category" && <Field label="Categories (use | between items)" value={selected.data.items} onChange={(v) => updateSelected("items", v)} />}
-                    {selected.type === "product" && <><Field label="Products (use | between items)" value={selected.data.items} onChange={(v) => updateSelected("items", v)} /><Field label="Prices" value={selected.data.prices} onChange={(v) => updateSelected("prices", v)} /></>}
+                    {selected.type === "product" && <><label className="field">Product Source<select value={selected.data.source || "manual"} onChange={(e) => updateSelected("source", e.target.value)}><option value="catalog">Live Shop Catalog</option><option value="manual">Manual Products</option></select></label>{(selected.data.source || "manual") === "manual" && <><Field label="Products (use | between items)" value={selected.data.items || ""} onChange={(v) => updateSelected("items", v)} /><Field label="Prices" value={selected.data.prices || ""} onChange={(v) => updateSelected("prices", v)} /></>}</>}
                     {selected.type === "image" && <Field label="Image URL" value={selected.data.url} onChange={(v) => updateSelected("url", v)} />}
                     {selected.type === "button" && <Field label="Button Label" value={selected.data.label} onChange={(v) => updateSelected("label", v)} />}
                     {selected.type === "search" && <Field label="Heading" value={selected.data.title} onChange={(v) => updateSelected("title", v)} />}
@@ -381,7 +424,7 @@ function App() {
               if (activePage === "Photo Search") return x.type === "search";
               if (activePage === "Share Product") return ["product", "whatsapp"].includes(x.type);
               return true;
-            }).map(item => <BuilderPreviewComponent key={item.id} item={item} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
+            }).map(item => <BuilderPreviewComponent key={item.id} item={item} products={clientProducts} />)}</div></div><div className="preview-side"><b>Live customer preview</b><p>Published: {published ? "Yes" : "Draft"}</p><p>Page: {activePage}</p><button className="primary-full" onClick={() => setShowBuilderPreview(false)}>Close Preview</button></div></div></Modal>}\n\n      {published && <div className="toast" onClick={() => setPublished(false)}>✓ {client} app published successfully</div>}
     </div>
   );
 }
