@@ -113,6 +113,176 @@ app.post("/api/auth/logout", (req, res) => {
 });
 
 
+const shopMeta = {
+  "YA-101": { name: "ABC Traders", slug: "abc-traders", limit: 1000, active: true },
+  "YA-102": { name: "Global Fashion", slug: "global-fashion", limit: 500, active: true },
+  "YA-103": { name: "Shree Enterprises", slug: "shree-enterprises", limit: 250, active: false }
+};
+
+function customerSession(req) {
+  const token = req.cookies.b2b_customer_session;
+  const session = token && sessions.get("customer:" + token);
+  if (!session || session.expiresAt < Date.now()) {
+    if (token) sessions.delete("customer:" + token);
+    return null;
+  }
+  return session;
+}
+
+function customerAuth(req, res, next) {
+  const session = customerSession(req);
+  if (!session) return res.status(401).json({ error: "Customer session expired" });
+  req.customer = session;
+  next();
+}
+
+function normalizePhone(value) {
+  return String(value || "").replace(/\\D/g, "");
+}
+
+function parseMoney(value) {
+  const n = Number(String(value || "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function createCustomerSession(clientId, customerId) {
+  const token = crypto.randomBytes(32).toString("hex");
+  sessions.set("customer:" + token, { clientId, customerId, expiresAt: Date.now() + SESSION_TTL });
+  return token;
+}
+
+app.post("/api/customer/register", (req, res) => {
+  const slug = String(req.body?.shop || "").trim().toLowerCase();
+  const metaEntry = Object.entries(shopMeta).find(([, x]) => x.slug === slug);
+  if (!metaEntry) return res.status(404).json({ error: "Shop not found" });
+  const [clientId, meta] = metaEntry;
+  if (!meta.active) return res.status(403).json({ error: "Shop is inactive" });
+
+  const name = String(req.body?.name || "").trim();
+  const phone = String(req.body?.phone || "").trim();
+  const email = String(req.body?.email || "").trim();
+  const address = String(req.body?.address || "").trim();
+  if (name.length < 2) return res.status(400).json({ error: "Customer name is required" });
+  if (normalizePhone(phone).length < 8) return res.status(400).json({ error: "Valid mobile number is required" });
+  if (!address) return res.status(400).json({ error: "Delivery address is required" });
+
+  const store = loadStore();
+  const existing = store.customers.find(x => x.clientId === clientId && normalizePhone(x.phone) === normalizePhone(phone));
+  if (existing) return res.status(409).json({ error: "This mobile number is already registered. Please login." });
+
+  const count = store.customers.filter(x => x.clientId === clientId).length;
+  if (count >= meta.limit) return res.status(409).json({ error: "Customer registration limit has been reached for this shop." });
+
+  const customer = {
+    id: "C-" + Date.now(),
+    name, phone, email: email || undefined, address, orders: 0, status: "Active", clientId
+  };
+  store.customers.unshift(customer);
+  saveStore(store);
+
+  const token = createCustomerSession(clientId, customer.id);
+  res.cookie("b2b_customer_session", token, {
+    httpOnly: true, sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: SESSION_TTL, path: "/"
+  });
+  return res.status(201).json({ customer, clientId });
+});
+
+app.post("/api/customer/login", (req, res) => {
+  const slug = String(req.body?.shop || "").trim().toLowerCase();
+  const metaEntry = Object.entries(shopMeta).find(([, x]) => x.slug === slug);
+  if (!metaEntry) return res.status(404).json({ error: "Shop not found" });
+  const [clientId, meta] = metaEntry;
+  if (!meta.active) return res.status(403).json({ error: "Shop is inactive" });
+
+  const phone = String(req.body?.phone || "").trim();
+  if (normalizePhone(phone).length < 8) return res.status(400).json({ error: "Valid mobile number is required" });
+
+  const store = loadStore();
+  const customer = store.customers.find(x => x.clientId === clientId && normalizePhone(x.phone) === normalizePhone(phone) && x.status === "Active");
+  if (!customer) return res.status(401).json({ error: "Customer not found. Please register first." });
+
+  const token = createCustomerSession(clientId, customer.id);
+  res.cookie("b2b_customer_session", token, {
+    httpOnly: true, sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: SESSION_TTL, path: "/"
+  });
+  return res.json({ customer, clientId });
+});
+
+app.get("/api/customer/me", customerAuth, (req, res) => {
+  const store = loadStore();
+  const customer = store.customers.find(x => x.id === req.customer.customerId && x.clientId === req.customer.clientId);
+  if (!customer || customer.status !== "Active") return res.status(401).json({ error: "Customer account unavailable" });
+  return res.json({ customer, clientId: req.customer.clientId });
+});
+
+app.post("/api/customer/logout", (req, res) => {
+  const token = req.cookies.b2b_customer_session;
+  if (token) sessions.delete("customer:" + token);
+  res.clearCookie("b2b_customer_session", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
+  res.status(204).end();
+});
+
+app.post("/api/customer/orders", customerAuth, (req, res) => {
+  const clientId = req.customer.clientId;
+  const customerId = req.customer.customerId;
+  const address = String(req.body?.address || "").trim();
+  const rawLines = Array.isArray(req.body?.lines) ? req.body.lines : [];
+  if (!address) return res.status(400).json({ error: "Delivery address is required" });
+  if (!rawLines.length) return res.status(400).json({ error: "Cart is empty" });
+
+  const store = loadStore();
+  const customer = store.customers.find(x => x.id === customerId && x.clientId === clientId);
+  if (!customer || customer.status !== "Active") return res.status(401).json({ error: "Customer account unavailable" });
+
+  const lines = [];
+  for (const raw of rawLines) {
+    const product = store.products.find(x => x.id === String(raw.productId) && x.clientId === clientId && x.status === "Active");
+    const qty = Number(raw.qty);
+    if (!product || !Number.isInteger(qty) || qty < 1) return res.status(400).json({ error: "Invalid product or quantity" });
+    if (product.stock < qty) return res.status(409).json({ error: "Insufficient stock for " + product.name });
+    const unitPrice = parseMoney(product.price);
+    lines.push({ productId: product.id, name: product.name, sku: product.sku, qty, unitPrice, lineTotal: unitPrice * qty });
+  }
+
+  const items = lines.reduce((sum, line) => sum + line.qty, 0);
+  const amount = lines.reduce((sum, line) => sum + line.lineTotal, 0);
+  for (const line of lines) {
+    const product = store.products.find(x => x.id === line.productId && x.clientId === clientId);
+    product.stock -= line.qty;
+  }
+
+  customer.orders = Number(customer.orders || 0) + 1;
+  customer.address = address;
+  const order = {
+    id: "ORD-" + Date.now(),
+    customer: customer.name,
+    phone: customer.phone,
+    email: customer.email,
+    address,
+    customerId: customer.id,
+    clientId,
+    items,
+    lines,
+    amount,
+    status: "Pending",
+    createdAt: new Date().toLocaleString("en-IN", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })
+  };
+  store.orders.unshift(order);
+  saveStore(store);
+  return res.status(201).json({ order, customer, products: store.products.filter(x => x.clientId === clientId) });
+});
+
+app.get("/api/customer/orders", customerAuth, (req, res) => {
+  const store = loadStore();
+  return res.json({
+    orders: store.orders.filter(x => x.clientId === req.customer.clientId && x.customerId === req.customer.customerId)
+  });
+});
+
 app.get("/api/owner/data", auth, (_req, res) => {
   const clientId = ownerClient(_req);
   const store = loadStore();
