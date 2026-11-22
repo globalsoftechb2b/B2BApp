@@ -7,3 +7,5 @@ dist/
 .DS_Store
 
 server/data/owners.json
+
+server/data/store.json
