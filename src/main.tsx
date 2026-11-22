@@ -247,8 +247,7 @@ function App() {
         : item
     );
     setComponents(next);
-    setPagesByClient((current) => ({ ...current, [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: next } }));
-  }
+    setPagesByClient((current) => ({ ...current, [activeClient.id]: { ...(current[activeClient.id] ?? {}), [activePage]: next } }));  }
 
   function moveSelected(direction: -1 | 1) {
     const index = components.findIndex((item) => item.id === selectedId);
@@ -428,11 +427,11 @@ function App() {
           <div><strong>{shopOwnerMode ? (activeClient?.name || "Shop Owner") : "YASH B2B APP Builder"}</strong><span className="saas-pill">{shopOwnerMode ? "SHOP APP" : "SaaS"}</span></div>
         </div>
         {!shopOwnerMode ? <nav className="topnav">
-          <span>⌂ Dashboard</span>
-          <span>♙ Clients</span>
-          <span className="active">✣ App Builder</span>
-          <span>▤ Subscriptions</span>
-          <span>▥ Reports</span>
+          <button className={view==="overview"?"topnav-item active":"topnav-item"} onClick={()=>setView("overview")}>⌂ Dashboard</button>
+          <button className={view==="clients"?"topnav-item active":"topnav-item"} onClick={()=>setView("clients")}>♙ Clients</button>
+          <button className={view==="builder"?"topnav-item active":"topnav-item"} onClick={()=>setView("builder")}>✣ App Builder</button>
+          <button className={view==="billing"?"topnav-item active":"topnav-item"} onClick={()=>setView("billing")}>▤ Subscriptions</button>
+          <button className={view==="reports"?"topnav-item active":"topnav-item"} onClick={()=>setView("reports")}>▥ Reports</button>
         </nav> : <div className="owner-top-title"><span>Shop Owner App</span><small>Manage your B2B business</small></div>}
         <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {}); setShopOwnerMode(false); setOwnerSession(null); setOwnerEmail(""); setOwnerPassword(""); setOwnerError(""); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
       </header>
@@ -440,7 +439,7 @@ function App() {
       <div className={shopOwnerMode ? "workspace owner-workspace" : "workspace"}>
         {!shopOwnerMode ? <aside className="sidebar">
           <div className="side-section">
-            {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"],["templates","Templates","◫"],["customization","Customization","✦"],["settings","Settings","⚙"],["billing","Billing","▤"],["users","Users","♙"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>openOwnerWorkspace(key as AppView)}><span>{ico}</span>{label}</button>)}
+            {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"],["templates","Templates","◫"],["customization","Customization","✦"],["settings","Settings","⚙"],["billing","Billing","▤"],["users","Users","♙"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>setView(key as AppView)}><span>{ico}</span>{label}</button>)}
           </div>
           <div className="saas-card">
             <div className="crown">♛</div><b>SaaS Model</b>
@@ -497,8 +496,7 @@ function App() {
                 <div className="phone-body" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
                   <div className="app-strip"><span>Welcome to {client}</span><b>●</b></div>
                   {components.map((item) => (
-                    <div key={item.id} className={item.id === selectedId ? "canvas-item selected-canvas" : "canvas-item"} onClick={() => setSelectedId(item.id)}>
-                      {item.type === "category" && <div className="categories">{item.data.items.split("|").filter(Boolean).map((x) => <div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>}
+                    <div key={item.id} className={item.id === selectedId ? "canvas-item selected-canvas" : "canvas-item"} onClick={() => setSelectedId(item.id)}>                      {item.type === "category" && <div className="categories">{item.data.items.split("|").filter(Boolean).map((x) => <div className="cat" key={x}><div className="cat-icon">◇</div><b>{x}</b></div>)}</div>}
                       {item.type === "banner" && <div className="banner"><div><h2>{item.title}</h2><p>{item.data.subtitle}</p><button>{item.data.button} →</button></div><div className="banner-art">◯</div></div>}
                       {item.type === "text" && <h2 className="mobile-heading">{item.title}</h2>}                      {item.type === "product" && <div><div className="section-head"><b>{item.title}</b><span>View All →</span></div><div className="products">{item.data.items.split("|").filter(Boolean).map((x, i) => <div className="product" key={x}><div className="product-img">◇</div><b>{item.data.prices.split("|")[i] ?? "₹999"}</b><span>{x}</span></div>)}</div></div>}
                       {item.type === "image" && <div className="image-block">{item.data.url ? <img src={item.data.url} alt="" /> : "Image placeholder"}</div>}
