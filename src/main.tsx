@@ -367,7 +367,7 @@ function CustomerStorefront({client,products,customers,setCustomers,setClients,s
     if(phone.replace(/\\D/g,"").length<8){setAuthError("Enter a valid mobile number.");return;}
     if(!address){setAuthError("Delivery address is required.");return;}
     if(customers.some(c=>c.phone.replace(/\\D/g,"")===phone.replace(/\\D/g,""))){setAuthError("This mobile number is already registered. Please login.");return;}
-    const registeredCount=customers.filter(c=>c.clientId===client.id).length;
+    const registeredCount=client.customers;
     if(registeredCount>=client.limit){setAuthError("Customer registration limit has been reached for this shop.");return;}
     const next:Customer={id:`C-${Date.now()}`,name,phone,email:email||undefined,address,orders:0,status:"Active",clientId:client.id};
     setCustomers(x=>[...x,next]); setClients(x=>x.map(c=>c.id===client.id?{...c,customers:c.customers+1}:c)); setCustomer(next); setAuthMode(null); setAuthError(""); setCheckoutOpen(true);
