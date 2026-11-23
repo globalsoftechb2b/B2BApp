@@ -380,3 +380,17 @@ th{position:sticky;top:0;z-index:1}
  .customers-view .page-title{align-items:flex-start}
  .customers-view .limit-badge{margin-top:4px}
 }
+
+
+/* Orders workspace polish */
+.orders-view .order-status{min-width:118px;border:1px solid #dfe4ed;border-radius:8px;padding:7px 9px;background:#fff;font-size:9px;font-weight:700}
+.orders-view .order-status:focus{outline:none;border-color:#8b95a8}
+.orders-view .table-card{overflow:auto}
+.orders-view .table-card table{min-width:920px}
+.orders-view .order-detail-head{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.orders-view .order-detail-head>div,.orders-view .order-address{border:1px solid #e8ebf1;border-radius:10px;padding:11px;background:#fafbfc}
+.orders-view .order-detail-head span,.orders-view .order-address span{display:block;font-size:8px;color:#8a92a4;text-transform:uppercase;font-weight:800}
+.orders-view .order-detail-head b,.orders-view .order-address b{display:block;margin-top:4px;font-size:11px}
+.orders-view .order-address{margin-top:10px}
+@media(max-width:900px){.orders-view .order-detail-head{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.orders-view .order-detail-head{grid-template-columns:1fr}.orders-view .page-title{align-items:flex-start}}
