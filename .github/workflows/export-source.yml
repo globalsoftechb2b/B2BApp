@@ -1,0 +1,21 @@
+name: Export B2BApp Source ZIP
+
+on:
+  push:
+    paths:
+      - ".github/workflows/export-source.yml"
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create source ZIP
+        run: |
+          zip -qr B2BApp-source.zip . -x ".git/*"
+      - name: Upload source ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: B2BApp-source
+          path: B2BApp-source.zip
