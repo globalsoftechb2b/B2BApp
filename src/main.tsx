@@ -15,7 +15,7 @@ type BuilderComponent = {
 };
 
 type Tab = "content" | "style" | "action" | "visibility";
-type AppView = "overview" | "clients" | "subscriptions" | "builder" | "shop" | "products" | "customers" | "store" | "orders" | "reports";
+type AppView = "overview" | "clients" | "subscriptions" | "builder" | "shop" | "products" | "customers" | "store" | "orders" | "reports" | "templates" | "customization" | "settings";
 type Client = { id:string; name:string; slug:string; limit:number; status:"Active"|"Inactive"; builder:boolean; products:number; customers:number; ownerEmail?:string; ownerPassword?:string; appLimit?:number; subscriptionPlan?:string; subscriptionStatus?:string; subscriptionEnd?:string };
 type Product = { id:string; name:string; sku:string; category:string; price:string; stock:number; status:"Active"|"Draft"; clientId?:string };
 type Customer={id:string;name:string;phone:string;email?:string;address?:string;orders:number;status:"Active"|"Blocked";clientId?:string};
@@ -442,7 +442,7 @@ function App() {
       <div className={shopOwnerMode ? "workspace owner-workspace" : "workspace"}>
         {!shopOwnerMode ? <aside className="sidebar">
           <div className="side-section">
-            {([["overview","Overview","⌂"],["clients","Clients","♙"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>setView(key as AppView)}><span>{ico}</span>{label}</button>)}
+            {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"],["templates","Templates","▦"],["customization","Customization","✦"],["settings","Settings","⚙"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>setView(key as AppView)}><span>{ico}</span>{label}</button>)}
           </div>
           <div className="saas-card">
             <div className="crown">♛</div><b>SaaS Model</b>
