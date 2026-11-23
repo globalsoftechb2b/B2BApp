@@ -452,7 +452,7 @@ function App() {
           {view==="shop" && <ShopDashboard client={activeClient} products={clientProducts} orders={clientOrders} setView={setView} onAddProduct={()=>setShowProductForm(true)} onOpenOwner={openShopOwner}/>}
           {view==="products" && <ProductsView products={filteredProducts} search={productSearch} setSearch={setProductSearch} onAdd={()=>{setEditingProduct(null);setNewProductName("");setNewProductPrice("");setNewProductStock("0");setShowProductForm(true)}} onEdit={openProductEdit} onDelete={deleteProduct}/>} 
           {view==="customers" && <CustomersView client={activeClient} customers={clientCustomers} orders={clientOrders} setCustomers={setCustomers} ownerSession={ownerSession}/>}
-          {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders} setProducts={setProducts}/>}
+          {view==="orders" && <OrdersView client={activeClient} orders={clientOrders} setOrders={setOrders} setProducts={setProducts} ownerSession={ownerSession}/>}
           {view==="store" && <CustomerStorefront client={activeClient} products={clientProducts} customers={clientCustomers} setCustomers={setCustomers} setClients={setClients} setOrders={setOrders} setProducts={setProducts}/>} 
           {view==="builder" && <>
           <section className="clientbar">
