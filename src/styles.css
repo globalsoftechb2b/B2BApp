@@ -359,3 +359,24 @@ th{position:sticky;top:0;z-index:1}
  .products-view .product-summary-card b{font-size:18px}
  .products-view .product-toolbar{gap:8px}
 }
+
+
+/* Customers workspace polish */
+.customers-view .customer-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.customer-summary-card{background:#fff;border:1px solid #e5e8f0;border-radius:12px;padding:13px}
+.customer-summary-card span{display:block;font-size:8px;color:#7e879a;font-weight:800}
+.customer-summary-card b{display:block;font-size:20px;margin-top:4px}
+.customer-summary-card small{font-size:8px;color:#9299aa}
+.customers-view .customer-toolbar{padding:15px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #edf0f5}
+.customers-view .customer-toolbar b{font-size:11px}
+.customers-view .customer-toolbar span{font-size:8px;color:#8991a3}
+.customers-view .table-client{gap:9px}
+.customers-view .client-mark{width:30px;height:30px}
+@media(max-width:900px){.customers-view .customer-summary{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){
+ .customers-view .customer-summary{gap:7px}
+ .customer-summary-card{padding:11px}
+ .customer-summary-card b{font-size:18px}
+ .customers-view .page-title{align-items:flex-start}
+ .customers-view .limit-badge{margin-top:4px}
+}
