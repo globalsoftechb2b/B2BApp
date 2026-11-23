@@ -103,7 +103,7 @@ function BuilderPreviewComponent({ item, products, client, onAction }: { item: B
 }
 function App() {
   const [client, setClient] = useState("ABC Traders");
-  const [view, setView] = useState<AppView>("builder");
+  const [view, setView] = useState<AppView>("overview");
   const [shopOwnerMode, setShopOwnerMode] = useState(false);
   const [ownerSession, setOwnerSession] = useState<string | null>(null);
   const [ownerEmail, setOwnerEmail] = useState("");
@@ -430,8 +430,9 @@ function App() {
           <button className={view==="overview"?"topnav-item active":"topnav-item"} onClick={()=>setView("overview")}>⌂ Dashboard</button>
           <button className={view==="clients"?"topnav-item active":"topnav-item"} onClick={()=>setView("clients")}>♙ Clients</button>
           <button className={view==="builder"?"topnav-item active":"topnav-item"} onClick={()=>setView("builder")}>✣ App Builder</button>
-          <button className={view==="billing"?"topnav-item active":"topnav-item"} onClick={()=>setView("billing")}>▤ Subscriptions</button>
-          <button className={view==="reports"?"topnav-item active":"topnav-item"} onClick={()=>setView("reports")}>▥ Reports</button>
+          <button className={view==="shop"?"topnav-item active":"topnav-item"} onClick={()=>setView("shop")}>▣ Shop Dashboard</button>
+          <button className={view==="products"?"topnav-item active":"topnav-item"} onClick={()=>setView("products")}>◇ Products</button>
+          <button className={view==="orders"?"topnav-item active":"topnav-item"} onClick={()=>setView("orders")}>▤ Orders</button>
         </nav> : <div className="owner-top-title"><span>Shop Owner App</span><small>Manage your B2B business</small></div>}
         <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {}); setShopOwnerMode(false); setOwnerSession(null); setOwnerEmail(""); setOwnerPassword(""); setOwnerError(""); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
       </header>
@@ -439,7 +440,7 @@ function App() {
       <div className={shopOwnerMode ? "workspace owner-workspace" : "workspace"}>
         {!shopOwnerMode ? <aside className="sidebar">
           <div className="side-section">
-            {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"],["templates","Templates","◫"],["customization","Customization","✦"],["settings","Settings","⚙"],["billing","Billing","▤"],["users","Users","♙"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>setView(key as AppView)}><span>{ico}</span>{label}</button>)}
+            {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>setView(key as AppView)}><span>{ico}</span>{label}</button>)}
           </div>
           <div className="saas-card">
             <div className="crown">♛</div><b>SaaS Model</b>
