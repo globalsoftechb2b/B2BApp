@@ -259,3 +259,72 @@ th{position:sticky;top:0;z-index:1}
 .client-card-bottom{padding-top:14px;border-top:1px solid #eef1f5}
 @media(max-width:1050px){.client-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.client-cards{grid-template-columns:1fr}}
+
+
+/* Shop Dashboard workspace polish */
+.shop-dashboard .page-title{align-items:center}
+.shop-dashboard .page-title h1{font-size:27px}
+.shop-identity-pro{padding:18px 20px;min-height:82px}
+.shop-main-identity{display:flex;flex-direction:column;gap:4px}
+.shop-main-identity b{font-size:14px}
+.shop-main-identity span{font-size:9px;color:#c9d1e5}
+.shop-main-identity small{font-size:9px;color:#aeb8cf;display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#9ca3af}
+.dot.live{background:#4ade80;box-shadow:0 0 0 3px #4ade8020}
+.shop-link-actions{display:flex;gap:7px;margin-left:auto}
+.shop-link-actions .copy-btn{white-space:nowrap}
+.shop-stats .stat-card{min-height:112px}
+.shop-dashboard-grid{display:grid;grid-template-columns:1.35fr .85fr;gap:14px;margin-bottom:14px}
+.shop-health-card,.shop-actions-card{min-height:245px}
+.health-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.health-grid>div{border:1px solid #edf0f5;border-radius:11px;padding:12px;background:#fbfcfe;min-height:88px}
+.health-grid span{display:block;font-size:8px;color:#7f8799;font-weight:800}
+.health-grid b{display:block;font-size:16px;margin:5px 0 2px}
+.health-grid small{font-size:8px;color:#9098a9}
+.health-track{height:5px;background:#e9edf4;border-radius:99px;overflow:hidden;margin:5px 0}
+.health-track i{display:block;height:100%;background:#5731cc;border-radius:99px}
+.warning-number{color:#b45309!important}
+.shop-quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.shop-quick-actions button{border:1px solid #e7eaf1;background:#fff;border-radius:10px;padding:11px;display:flex;align-items:center;gap:9px;text-align:left;color:#5731cc}
+.shop-quick-actions button:hover{border-color:#cfc9ef;background:#faf9ff;transform:translateY(-1px)}
+.shop-quick-actions button>span{width:30px;height:30px;border-radius:9px;background:#f0edff;display:grid;place-items:center;font-weight:900}
+.shop-quick-actions button div{display:flex;flex-direction:column;gap:2px;flex:1}
+.shop-quick-actions b{font-size:9px;color:#20283a}
+.shop-quick-actions small{font-size:7px;color:#8a92a4}
+.shop-lower-grid{margin-top:0}
+.customer-app-preview{display:flex;gap:14px;align-items:center;min-height:128px}
+.mini-phone{width:84px;height:118px;border-radius:15px;background:#111827;padding:4px;box-shadow:0 8px 20px #101a3520;flex:none}
+.mini-phone-top{height:27px;border-radius:12px 12px 0 0;background:#2d72e6;color:#fff;font-size:6px;padding:8px 5px;display:flex;justify-content:space-between}
+.mini-phone-body{height:83px;background:#fff;border-radius:0 0 12px 12px;padding:8px 6px;display:flex;flex-direction:column;gap:5px}
+.mini-phone-body>b{font-size:6px}
+.mini-phone-body>span{font-size:5px;color:#8a92a4}
+.mini-phone-body>div{display:flex;gap:3px;margin-top:auto}
+.mini-phone-body i{height:25px;flex:1;border-radius:4px;background:#f0f2f8}
+.customer-app-copy{display:flex;flex-direction:column;gap:6px;min-width:0}
+.customer-app-copy>b{font-size:11px}
+.customer-app-copy>span{font-size:8px;color:#7f8799}
+.customer-app-copy code{font-size:7px;color:#5731cc;background:#f6f4ff;border-radius:6px;padding:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:1050px){
+  .shop-dashboard-grid{grid-template-columns:1fr}
+  .shop-link-actions{flex-wrap:wrap}
+}
+@media(max-width:700px){
+  .shop-dashboard .page-title h1{font-size:23px}
+  .shop-identity-pro{align-items:flex-start;flex-wrap:wrap}
+  .shop-main-identity{min-width:180px;flex:1}
+  .shop-link-actions{width:100%;margin-left:0}
+  .shop-link-actions .copy-btn{flex:1}
+  .shop-stats{grid-template-columns:1fr 1fr}
+  .health-grid{grid-template-columns:1fr 1fr}
+  .shop-quick-actions{grid-template-columns:1fr}
+  .customer-app-preview{align-items:flex-start}
+}
+@media(max-width:480px){
+  .shop-dashboard .title-actions{display:grid;grid-template-columns:1fr 1fr}
+  .shop-dashboard .title-actions .primary{grid-column:1/-1}
+  .shop-stats .stat-card{min-height:100px}
+  .health-grid{grid-template-columns:1fr}
+  .shop-link-actions{flex-direction:column}
+  .shop-link-actions .copy-btn{width:100%}
+  .customer-app-preview{gap:10px}
+}
