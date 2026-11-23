@@ -529,3 +529,48 @@ th{position:sticky;top:0;z-index:1}
 .app-shell .workspace:not(.owner-workspace) .sidebar .side-item.selected span{
   color:#ffffff !important;
 }
+
+/* Simple Super Admin shell: sidebar is the primary navigation */
+.topnav-spacer{flex:1;min-width:0}
+.app-shell .workspace:not(.owner-workspace) .sidebar{
+  width:220px !important;
+  flex:0 0 220px !important;
+  padding:16px 12px !important;
+  background:#101a35 !important;
+  overflow:visible !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-section{gap:4px !important}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item{
+  width:100% !important;
+  min-height:46px !important;
+  padding:0 14px !important;
+  margin:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  border:0 !important;
+  border-radius:8px !important;
+  background:transparent !important;
+  color:#e8edf7 !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  opacity:1 !important;
+  visibility:visible !important;
+  box-shadow:none !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item span{
+  display:inline-flex !important;
+  width:24px !important;
+  color:#b8c3da !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item:hover{
+  background:#1d2b4d !important;
+  color:#fff !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item.selected{
+  background:#315bc0 !important;
+  color:#fff !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item.selected span{color:#fff !important}
