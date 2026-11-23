@@ -429,13 +429,7 @@ function App() {
           <div className="brand-logo">{shopOwnerMode ? (activeClient?.name.slice(0,1) || "S") : "Y"}</div>
           <div><strong>{shopOwnerMode ? (activeClient?.name || "Shop Owner") : "YASH B2B APP"}</strong><span className="saas-pill">{shopOwnerMode ? "SHOP APP" : "SUPER ADMIN"}</span></div>
         </div>
-        {!shopOwnerMode ? <nav className="topnav">
-          <button className={view==="overview"?"topnav-item active":"topnav-item"} onClick={()=>setView("overview")}>⌂ Dashboard</button>
-          <button className={view==="clients"?"topnav-item active":"topnav-item"} onClick={()=>setView("clients")}>♙ Clients</button>
-          <button className={view==="builder"?"topnav-item active":"topnav-item"} onClick={()=>setView("builder")}>✣ App Builder</button>
-          <button className={view==="subscriptions"?"topnav-item active":"topnav-item"} onClick={()=>setView("subscriptions")}>▣ Subscriptions</button>
-          <button className={view==="reports"?"topnav-item active":"topnav-item"} onClick={()=>setView("reports")}>▤ Reports</button>
-        </nav> : <div className="owner-top-title"><span>Shop Owner App</span><small>Manage your B2B business</small></div>}
+        {!shopOwnerMode ? <div className="topnav-spacer" /> : <div className="owner-top-title"><span>Shop Owner App</span><small>Manage your B2B business</small></div>}
         <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {}); setShopOwnerMode(false); setOwnerSession(null); setOwnerEmail(""); setOwnerPassword(""); setOwnerError(""); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
       </header>
 
@@ -443,10 +437,6 @@ function App() {
         {!shopOwnerMode ? <aside className="sidebar">
           <div className="side-section">
             {([["overview","Overview","⌂"],["clients","Clients","♙"],["builder","App Builder","✣"],["shop","Shop Dashboard","▣"],["products","Products","◇"],["customers","Customers","♧"],["orders","Orders","▤"],["store","Customer App","◉"],["templates","Templates","▦"],["customization","Customization","✦"],["settings","Settings","⚙"]] as const).map(([key,label,ico]) => <button key={key} className={view===key?"side-item selected":"side-item"} onClick={()=>setView(key as AppView)}><span>{ico}</span>{label}</button>)}
-          </div>
-          <div className="saas-card">
-            <div className="crown">♛</div><b>SaaS Model</b>
-            <div>✓ Multi Client</div><div>✓ Custom App URL</div><div>✓ Full Customization</div><div>✓ Drag & Drop Builder</div>
           </div>
         </aside> : null}
 
