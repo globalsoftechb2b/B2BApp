@@ -424,15 +424,13 @@ function App() {
       <header className={shopOwnerMode ? "topbar owner-topbar" : "topbar"}>
         <div className="brand">
           <div className="brand-logo">{shopOwnerMode ? (activeClient?.name.slice(0,1) || "S") : "Y"}</div>
-          <div><strong>{shopOwnerMode ? (activeClient?.name || "Shop Owner") : "YASH B2B APP Builder"}</strong><span className="saas-pill">{shopOwnerMode ? "SHOP APP" : "SaaS"}</span></div>
+          <div><strong>{shopOwnerMode ? (activeClient?.name || "Shop Owner") : "YASH B2B APP"}</strong><span className="saas-pill">{shopOwnerMode ? "SHOP APP" : "SUPER ADMIN"}</span></div>
         </div>
         {!shopOwnerMode ? <nav className="topnav">
           <button className={view==="overview"?"topnav-item active":"topnav-item"} onClick={()=>setView("overview")}>⌂ Dashboard</button>
           <button className={view==="clients"?"topnav-item active":"topnav-item"} onClick={()=>setView("clients")}>♙ Clients</button>
           <button className={view==="builder"?"topnav-item active":"topnav-item"} onClick={()=>setView("builder")}>✣ App Builder</button>
-          <button className={view==="shop"?"topnav-item active":"topnav-item"} onClick={()=>setView("shop")}>▣ Shop Dashboard</button>
-          <button className={view==="products"?"topnav-item active":"topnav-item"} onClick={()=>setView("products")}>◇ Products</button>
-          <button className={view==="orders"?"topnav-item active":"topnav-item"} onClick={()=>setView("orders")}>▤ Orders</button>
+          <button className={view==="shop"?"topnav-item active":"topnav-item"} onClick={()=>setView("shop")}>▣ Shop</button>
         </nav> : <div className="owner-top-title"><span>Shop Owner App</span><small>Manage your B2B business</small></div>}
         <div className="profile"><div className="avatar">{shopOwnerMode ? "SO" : "YM"}</div><b>{shopOwnerMode ? "Shop Owner" : "Yash Mathur"}</b><button className="owner-exit" onClick={() => { fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {}); setShopOwnerMode(false); setOwnerSession(null); setOwnerEmail(""); setOwnerPassword(""); setOwnerError(""); setView("shop"); }}>{shopOwnerMode ? "← Admin" : "⌄"}</button></div>
       </header>
