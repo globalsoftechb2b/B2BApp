@@ -134,3 +134,58 @@
 .owner-login-copy p{margin:0 0 22px;color:#687386;line-height:1.5}
 .login-back{width:100%;margin-top:10px;border:0;background:transparent;color:#687386;font-weight:800;padding:10px;cursor:pointer}
 .login-security-note{display:block;margin-top:18px;color:#9aa3b1;font-size:10px;line-height:1.5;text-align:center}
+
+
+/* Super Admin navigation cleanup */
+.topnav-item{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:#4a5368;
+  padding:0 4px;
+  margin:0;
+  height:100%;
+  min-width:108px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.topnav-item:hover{
+  color:#5731cc;
+  background:#faf9ff;
+}
+.topnav-item.active{
+  color:#5731cc;
+  border-bottom:3px solid #5731cc;
+  background:#faf9ff;
+}
+.sidebar .side-section{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.sidebar .side-item{
+  appearance:none;
+  width:100%;
+  border:0;
+  background:transparent;
+  color:#dce3f4;
+  text-align:left;
+  cursor:pointer;
+}
+.sidebar .side-item:hover{
+  background:#1b2a50;
+  color:#fff;
+}
+.sidebar .side-item.selected{
+  background:#2856b7;
+  color:#fff;
+  box-shadow:inset 3px 0 0 #9d8cff;
+}
+@media(max-width:1250px){
+  .topnav-item{min-width:92px;font-size:11px}
+}
