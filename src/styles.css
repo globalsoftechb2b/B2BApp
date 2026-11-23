@@ -433,3 +433,71 @@ th{position:sticky;top:0;z-index:1}
 .simple-client-list{margin-top:0}.simple-table{border:1px solid #edf0f5;border-radius:10px;overflow:hidden}.simple-table-row{display:grid;grid-template-columns:2.2fr .6fr 1fr 1.1fr .8fr;gap:10px;align-items:center;padding:12px 14px;border-top:1px solid #edf0f5;font-size:9px}.simple-table-row:first-child{border-top:0}.simple-table-row.head{background:#fafbfe;border-top:0;font-size:8px;color:#8a92a4;font-weight:900}.simple-table-row span:first-child{display:flex;flex-direction:column;gap:2px}.simple-table-row small{font-size:7px;color:#8a92a4}.subscriptions-view .table-card{margin-top:0}
 @media(max-width:1000px){.super-admin-dashboard .stats-grid{grid-template-columns:repeat(2,1fr)}.simple-dashboard-grid{grid-template-columns:1fr}.simple-table{overflow:auto}.simple-table-row{min-width:720px}}
 @media(max-width:600px){.super-admin-dashboard .stats-grid{grid-template-columns:1fr 1fr}.admin-quick-actions{grid-template-columns:1fr}.subscription-summary{grid-template-columns:1fr 1fr}.simple-table-row{grid-template-columns:1.8fr .6fr .9fr 1fr .7fr}.simple-table{overflow:auto}}
+
+/* Final Super Admin sidebar navigation */
+.app-shell .workspace:not(.owner-workspace) > .sidebar{
+  width:220px;
+  flex:0 0 220px;
+  min-height:calc(100vh - 64px);
+  background:#101a35;
+  padding:20px 12px;
+  border-right:1px solid #1d2948;
+  box-shadow:none;
+  overflow:hidden;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-section{
+  width:100%;
+  gap:6px;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item{
+  box-sizing:border-box;
+  width:100%;
+  min-height:48px;
+  margin:0;
+  padding:0 16px;
+  border:0;
+  border-radius:9px;
+  background:transparent !important;
+  color:#aeb9d2 !important;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  font-size:12px;
+  font-weight:700;
+  text-align:left;
+  box-shadow:none !important;
+  transform:none !important;
+  transition:background .15s ease,color .15s ease;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item span{
+  width:24px;
+  flex:0 0 24px;
+  text-align:center;
+  color:#8290b2;
+  font-size:15px;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item:hover{
+  background:#1b294c !important;
+  color:#fff !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item:hover span{
+  color:#b8a8ff;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item.selected{
+  background:#2856b7 !important;
+  color:#fff !important;
+  font-weight:800;
+  box-shadow:inset 3px 0 0 #a997ff !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item.selected span{
+  color:#fff;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .saas-card{
+  left:12px;
+  right:12px;
+  bottom:18px;
+}
+@media(max-width:900px){
+  .app-shell .workspace:not(.owner-workspace) > .sidebar{width:190px;flex-basis:190px}
+  .app-shell .workspace:not(.owner-workspace) .sidebar .side-item{padding:0 12px}
+}
