@@ -501,3 +501,31 @@ th{position:sticky;top:0;z-index:1}
   .app-shell .workspace:not(.owner-workspace) > .sidebar{width:190px;flex-basis:190px}
   .app-shell .workspace:not(.owner-workspace) .sidebar .side-item{padding:0 12px}
 }
+
+/* Simple readable Super Admin menu */
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item{
+  min-height:44px;
+  padding:0 14px;
+  border-radius:8px;
+  background:transparent !important;
+  color:#e9edf7 !important;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:0;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item span{
+  color:#b9c3d9 !important;
+  font-size:14px;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item:hover{
+  background:#1d2b4e !important;
+  color:#ffffff !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item.selected{
+  background:#315bc0 !important;
+  color:#ffffff !important;
+  box-shadow:none !important;
+}
+.app-shell .workspace:not(.owner-workspace) .sidebar .side-item.selected span{
+  color:#ffffff !important;
+}
